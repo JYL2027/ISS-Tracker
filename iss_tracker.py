@@ -25,7 +25,7 @@ format_str=f'[%(asctime)s {socket.gethostname()}] %(filename)s:%(funcName)s:%(li
 logging.basicConfig(level=logging.ERROR, format = format_str)
 
 # Set up Redis connection
-rd = redis.Redis(host = '127.0.0.1', port = 6379, db = 0)
+rd = redis.Redis(host = 'redis-db', port = 6379, db = 0)
 
 ISS_URL = "https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml"
 
@@ -293,12 +293,12 @@ def get_epoch_data(epoch: str) -> str:
 
     try: 
         result = (f"Epoch: {epoch_match['EPOCH']}\n"
-        f"X: {epoch_match['X']["#text"]} km\n"
-        f"Y: {epoch_match['Y']["#text"]} km\n"
-        f"Z: {epoch_match['Z']["#text"]} km\n"
-        f"X_DOT: {epoch_match['X_DOT']["#text"]} km/s\n"
-        f"Y_DOT: {epoch_match['Y_DOT']["#text"]} km/s\n"
-        f"Z_DOT: {epoch_match['Z_DOT']["#text"]} km/s\n")
+                  f"X: {epoch_match['X']['#text']} km\n"
+                  f"Y: {epoch_match['Y']['#text']} km\n"
+                  f"Z: {epoch_match['Z']['#text']} km\n"
+                  f"X_DOT: {epoch_match['X_DOT']['#text']} km/s\n"
+                  f"Y_DOT: {epoch_match['Y_DOT']['#text']} km/s\n"
+                  f"Z_DOT: {epoch_match['Z_DOT']['#text']} km/s\n")
 
     except (KeyError, ValueError) as e:
         logging.error(f"Invalid data format: {e}")
@@ -484,4 +484,4 @@ def get_epoch_location(epoch: str) -> str:
 if __name__ == '__main__':
     # Store data in Redis
     fetch_data()
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='-1.0.0.0')
