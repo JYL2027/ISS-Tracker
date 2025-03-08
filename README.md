@@ -15,7 +15,7 @@ This project contains the following files and directories:
 ## Scripts:
 This folder contains two scripts for the Flask web application:
 1. **iss_tracker.py (main script)**
-This script contains routes that use the GET method to retrieve data you want to analyze or interpret. Based on your route, the script will either retrieve the whole data set or return certain data sets based on any query parameters you input. Beyond those functionalities, the script can also return the state vectors for a specific EPOCH, the instantaneous speed of a specific EPOCH, and the state vectors/instantaneous speed at the closest timestamp the route was called.
+This script contains routes that use the GET method to retrieve data you want to analyze or interpret. Based on your route, the script will either retrieve the whole data set or return certain data sets based on any query parameters you input. Beyond those functionalities, the script can also return the state vectors for a specific EPOCH, the instantaneous speed of a specific EPOCH, and the state vectors/instantaneous speed at the closest timestamp the route was called. Other functionalities include returning a specific epoch's latitude, longitude, and geospatial location or the closest epoch to the time the script was called. 
 3. **test_iss_tracker.py (unit test for the main script)**
 This script contains unit tests using `pytest` for the functions in `iss_tracker.py`. The tests cover cases such as invalid data, calculating the average/closest velocity, and managing missing or incorrect data.
 
