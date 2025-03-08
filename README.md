@@ -22,7 +22,7 @@ This script contains unit tests using `pytest` for the functions in `iss_tracker
 Please note that the current logging level is set to ERROR. If you wish to change this open `iss_tracker.py` with a text or code editor and replace the ERROR in logging.basicConfig to whichever level you want to run. (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 
 ## System Diagram:
-<img src="HW05_System_Diagram.png" alt="My Image" width="800">
+<img src="ISSTracker_System_Diagram.png" alt="My Image" width="800">
 The system diagram above depicts how the scripts and files in the directory interact with one another. It depicts how the container is ran and describes how the Flask web API interacts with the user to return data summaries from data from the web. 
 
 ## Data Origin:
