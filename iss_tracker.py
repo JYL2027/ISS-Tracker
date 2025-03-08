@@ -24,10 +24,11 @@ app = Flask(__name__)
 format_str=f'[%(asctime)s {socket.gethostname()}] %(filename)s:%(funcName)s:%(lineno)s - %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.ERROR, format = format_str)
 
-# Set up Redis connection
-rd = redis.Redis(host = '127.0.0.1', port = 6379, db = 0)
+def get_redis_client():
+    return redis.Redis(host='redis-db', port=6379, db=0)
 
-ISS_URL = "https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml"
+# Initialize Redis client
+rd = get_redis_client()
 
 def fetch_data():
     """
@@ -38,6 +39,8 @@ def fetch_data():
     Returns:
         None
     """
+
+    ISS_URL = "https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml"
     try:
         logging.info("Fetching data...")
         response = requests.get(ISS_URL)
