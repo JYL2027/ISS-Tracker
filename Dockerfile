@@ -9,6 +9,7 @@ RUN pip install -r /app/requirements.txt
 RUN pip3 install pytest==8.3.4
 RUN pip3 install requests
 RUN pip3 install xmltodict
+RUN pip3 install geopy
 
 COPY iss_tracker.py /app/iss_tracker.py
 COPY test_iss_tracker.py /app/test_iss_tracker.py

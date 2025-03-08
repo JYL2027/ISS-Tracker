@@ -10,6 +10,12 @@ from typing import Tuple
 from flask import Flask, Response, request
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
+import redis
+from astropy import coordinates
+from astropy import units
+from astropy.time import Time
+from geopy.geocoders import Nominatim
+
 
 # Initialize app
 app = Flask(__name__)
@@ -18,41 +24,68 @@ app = Flask(__name__)
 format_str=f'[%(asctime)s {socket.gethostname()}] %(filename)s:%(funcName)s:%(lineno)s - %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.ERROR, format = format_str)
 
-def fetch_data() -> list[dict]:
-    """
-    This function fetches and parses the ISS data using Python requests
+# Set up Redis connection
+rd = redis.Redis(host = '127.0.0.1', port = 6379, db = 0)
 
+ISS_URL = "https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml"
+
+def fetch_data():
+    """
+    This function fetches the ISS data and stores them in the Redis database
     Args:
         None
 
     Returns:
-        state_vectors (list[dict]): This function returns the statevectors of the parsed ISS data which is a list of dictionaries 
+        None
     """
-
-    ISS_URL = "https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml"  
     try:
-        logging.info("Fetching data from ISS...")
+        logging.info("Fetching data...")
         response = requests.get(ISS_URL)
-
-        # Check if request went through
         if response.status_code != 200:
             logging.error(f"Failed to fetch data. HTTP status code: {response.status_code}")
             return
         
+        # Storing data into list of dictionaries
         logging.info("Parsing XML data...")
-
         iss_data = xmltodict.parse(response.text)
-
-        # Getting into stateVector
         state_vectors = iss_data['ndm']['oem']['body']['segment']['data']['stateVector']
+        
         if not state_vectors:
             logging.error("No state_vector data.")
             return
         
+        # Store in Redis
+        count = 0.
+        for state in state_vectors:
+            rd.set(count, state)
+            count += 1
+        
+        logging.info("Data stored in Redis.")
+    except Exception as e:
+        logging.error(f"Error during data fetching: {e}")
+
+def fetch_data_from_redis():
+    """
+    Fetches data from Redis and returns it.
+
+    Returns:
+        state_vectors (list): A list of dictionaries representing state vectors
+    """
+    try:
+        logging.info("Fetching data from Redis...")
+        # Initialize list
+        state_vectors = []
+        count = 0
+        while rd.exists(count):  
+            state = rd.get(count).decode('utf-8')
+            state_vectors.append(state)
+            count += 1
+        logging.info("Data fetched from Redis.")
         return state_vectors
     
     except Exception as e:
-        logging.error(f"Error during data fetch: {e}")
+        logging.error(f"Error during data fetch from Redis: {e}")
+        return
 
 def calc_average_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> float:
     """
@@ -239,7 +272,7 @@ def get_epoch_data(epoch: str) -> str:
     Returns:
         result (str): The state vector data of a particular epoch
     """
-    state_vectors = fetch_data()
+    state_vectors = fetch_data_from_redis()
 
     if not state_vectors:
         logging.error("No data available")
@@ -285,7 +318,7 @@ def get_epoch_speed(epoch: str) -> str:
         speed (str): The calculated speed in km/s of a certain epoch
     """
 
-    state_vectors = fetch_data()
+    state_vectors = fetch_data_from_redis()
     if not state_vectors:
         logging.error("No data available")
         return ("Error no data")
@@ -320,16 +353,16 @@ def get_epoch_speed(epoch: str) -> str:
 @app.route('/now', methods = ['GET'])
 def get_current_state_vector_and_speed() -> str:
     """
-    Return state vector and instantaneous speed for the nearest epoch to current time
+    Return state vector, latitude, longitude, geoposition, and instantaneous speed for the nearest epoch to current time
 
     Args:
         None
 
     Returns:
-        response (str): This function returns the state vectors and instantaneous speed for the Epoch that is nearest in time as a string
+        response (str): This function returns the state vectors, instantaneous speed, latitude, longitude, and geoposition for the Epoch that is nearest in time as a string
     """
 
-    state_vectors = fetch_data()
+    state_vectors = fetch_data_from_redis()
     if state_vectors is None:
         logging.error("Error no data")
         return ("Error no data")
@@ -346,14 +379,109 @@ def get_current_state_vector_and_speed() -> str:
     closest_time = time.mktime(time.strptime(closest_epoch["EPOCH"], '%Y-%jT%H:%M:%S.000Z'))
     close_time_readable = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(closest_time))
 
+    # Compute location (latitude, longitude, altitude), Code from coe-332 readthedocs
+    try:
+        this_epoch = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(closest_epoch['EPOCH'][:-5], '%Y-%jT%H:%M:%S'))
+        cartrep = coordinates.CartesianRepresentation([x, y, z], unit=units.km)
+        gcrs = coordinates.GCRS(cartrep, obstime=this_epoch)
+        itrs = gcrs.transform_to(coordinates.ITRS(obstime=this_epoch))
+        loc = coordinates.EarthLocation(*itrs.cartesian.xyz)
+
+        lat, lon, alt = loc.lat.value, loc.lon.value, loc.height.value
+    except Exception as e:
+        logging.error(f"Error calculating location with Astropy: {e}")
+        return
+
+    try:
+        geocoder = Nominatim(user_agent="iss_tracker")
+        geoloc = geocoder.reverse((lat, lon), zoom=15, language="en")
+        geoloc_address = geoloc.address if geoloc else "Unknown Location"
+    except Exception as e:
+        logging.error(f"GeoPy error: {e}")
+        geoloc_address = "Unknown Location"
+
     # Create the string
     response = (
         f"Closest time: {close_time_readable}\n"
         f"Closest position as a vector: {x} i + {y} j + {z} k (km)\n"
         f"Closest velocity as a vector: {x_velocity} i + {y_velocity} j + {z_velocity} k (km/s)\n"
         f"Instantaneous speed: {closest_speed} (km/s)\n"
+        f"Latitude: {lat}\n"
+        f"Longitude: {lon}\n"
+        f"Altitude: {alt} km\n"
+        f"Geolocation: {geoloc_address}\n"
     )
     return response
 
+@app.route('/epochs/<epoch>/location', methods = ['GET'])
+def get_epoch_location(epoch: str) -> str:
+    """
+    This route returns latitude, longitude, altitude, and geoposition for a given epoch
+
+    Args:
+        epoch (str): The string epoch of the epoch you want to find the latitude, longitude, altidude and geoposition of
+
+    Returns:
+        The function returns a string that lists the latitude, longitude, altidude and geoposition of the particular epoch in question
+    """
+
+    # This code is overall from the coe-332 readthedocs
+    try:
+        state_vectors = fetch_data_from_redis()
+        if not state_vectors:
+            logging.error("No data available in Redis.")
+            return
+
+        epoch_data = None
+        for sv in state_vectors:
+            if sv["EPOCH"] == epoch:
+                epoch_data = sv
+                break
+
+        if epoch_data is None:
+            logging.warning(f"Epoch {epoch} not found.")
+            return 
+        
+        x = float(epoch_data['X']['#text'])
+        y = float(epoch_data['Y']['#text'])
+        z = float(epoch_data['Z']['#text'])
+
+        try:
+            this_epoch = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(epoch_data['EPOCH'][:-5], '%Y-%jT%H:%M:%S'))
+        except Exception as e:
+            logging.error(f"Error processing epoch timestamp {epoch_data['EPOCH']}: {e}")
+            return 
+        
+        cartrep = coordinates.CartesianRepresentation([x, y, z], unit=units.km)
+        gcrs = coordinates.GCRS(cartrep, obstime=this_epoch)
+        itrs = gcrs.transform_to(coordinates.ITRS(obstime=this_epoch))
+        loc = coordinates.EarthLocation(*itrs.cartesian.xyz)
+
+        lat, lon, alt = loc.lat.value, loc.lon.value, loc.height.value
+
+        # Use GeoPy for geolocation lookup
+        try:
+            geocoder = Nominatim(user_agent="iss_tracker")
+            geoloc = geocoder.reverse((lat, lon), zoom=15, language="en")
+            geoloc_address = geoloc.address if geoloc else "Unknown Location"
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            return
+
+        logging.info(f"Location for epoch {epoch} calculated successfully.")
+
+        return {
+            "lat": lat,
+            "lon": lon,
+            "alt": alt,
+            "geoloc": geoloc_address
+        }
+    
+    except Exception as e:
+        logging.error(f"Unexpected error occurred: {e}")
+        return
+
 if __name__ == '__main__':
+    # Store data in Redis
+    fetch_data()
     app.run(debug=True, host='0.0.0.0')
