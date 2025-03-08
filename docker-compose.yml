@@ -2,12 +2,20 @@
 version: "3"
 
 services:
+    redis-db:
+        image: redis:7
+        ports:
+            - 6379:6379
+        volumes:
+            - ./data:/data
+        user: "1000:1000"
+        command: ["--save", "1", "1"]
     flask-app:
         build:
             context: ./
             dockerfile: ./Dockerfile
-        image: username/flask-iss_tracker:1.0
-        container_name: flask-iss_tracker-app
+        depends_on:
+            - redis-db
+        image: username/ml_flask_app:1.0
         ports:
-            - "5000:5000"
-...
+            - 5000:5000

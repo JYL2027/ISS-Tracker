@@ -1,7 +1,7 @@
 # NASA ISS Trajectory: A Speed, Velocity, and Position Summary
 
 ## Objective:
-This homework was created to utilize a Flask web application to analyze ISS data regarding its speed, velocities, and positions at certain time stamps based on a 15-day span of data about its trajectory, specifically focusing on the results closest to our most recent script call and any EPOCH we want to analyze based on the route we provide. This data is crucial for understanding the ISS’s movement in real time, supporting applications in aerospace analysis, orbital predictions, and mission planning. Overall, this aims to help us gain a better understanding of the ISS and its trajectory.
+This project was created to utilize a Flask web application to analyze ISS data regarding its speed, velocities, and positions at certain time stamps based on a 15-day span of data about its trajectory, specifically focusing on the results closest to our most recent script call and any EPOCH we want to analyze based on the route we provide. This data is crucial for understanding the ISS’s movement in real time, supporting applications in aerospace analysis, orbital predictions, and mission planning. Overall, this aims to help us gain a better understanding of the ISS and its trajectory.
 
 ## Contents: 
 This project contains the following files and directories:
@@ -10,11 +10,12 @@ This project contains the following files and directories:
 - requirements.txt: A file listing the required Python packages for the project, ensuring a consistent environment.
 - Dockerfile: The file used to build a Docker container for deploying the Flask app.
 - System Diagram
+- Docker-compose
 
 ## Scripts:
 This folder contains two scripts for the Flask web application:
 1. **iss_tracker.py (main script)**
-This script contains routes that use the GET method to retrieve data you want to analyze or interpret. Based on your route, the script will either retrieve the whole data set or return certain data sets based on any query parameters you input. Beyond those functionalities, the script can also return the state vectors for a specific EPOCH, the instantaneous speed of a specific EPOCH, and the state vectors/instantaneous speed at the closest timestamp the route was called.
+This script contains routes that use the GET method to retrieve data you want to analyze or interpret. Based on your route, the script will either retrieve the whole data set or return certain data sets based on any query parameters you input. Beyond those functionalities, the script can also return the state vectors for a specific EPOCH, the instantaneous speed of a specific EPOCH, and the state vectors/instantaneous speed at the closest timestamp the route was called. Other functionalities include returning a specific epoch's latitude, longitude, and geospatial location or the closest epoch to the time the script was called. 
 3. **test_iss_tracker.py (unit test for the main script)**
 This script contains unit tests using `pytest` for the functions in `iss_tracker.py`. The tests cover cases such as invalid data, calculating the average/closest velocity, and managing missing or incorrect data.
 
@@ -22,7 +23,7 @@ This script contains unit tests using `pytest` for the functions in `iss_tracker
 Please note that the current logging level is set to ERROR. If you wish to change this open `iss_tracker.py` with a text or code editor and replace the ERROR in logging.basicConfig to whichever level you want to run. (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 
 ## System Diagram:
-<img src="HW05_System_Diagram.png" alt="My Image" width="800">
+<img src="ISSTracker_System_Diagram.png" alt="My Image" width="800">
 The system diagram above depicts how the scripts and files in the directory interact with one another. It depicts how the container is ran and describes how the Flask web API interacts with the user to return data summaries from data from the web. 
 
 ## Data Origin:
