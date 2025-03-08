@@ -1,7 +1,7 @@
 # NASA ISS Trajectory: A Speed, Velocity, and Position Summary
 
 ## Objective:
-This homework was created to utilize a Flask web application to analyze ISS data regarding its speed, velocities, and positions at certain time stamps based on a 15-day span of data about its trajectory, specifically focusing on the results closest to our most recent script call and any EPOCH we want to analyze based on the route we provide. This data is crucial for understanding the ISS’s movement in real time, supporting applications in aerospace analysis, orbital predictions, and mission planning. Overall, this aims to help us gain a better understanding of the ISS and its trajectory.
+This project was created to utilize a Flask web application to analyze ISS data regarding its speed, velocities, and positions at certain time stamps based on a 15-day span of data about its trajectory, specifically focusing on the results closest to our most recent script call and any EPOCH we want to analyze based on the route we provide. This data is crucial for understanding the ISS’s movement in real time, supporting applications in aerospace analysis, orbital predictions, and mission planning. Overall, this aims to help us gain a better understanding of the ISS and its trajectory.
 
 ## Contents: 
 This project contains the following files and directories:
