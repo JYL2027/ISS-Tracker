@@ -10,6 +10,7 @@ This project contains the following files and directories:
 - requirements.txt: A file listing the required Python packages for the project, ensuring a consistent environment.
 - Dockerfile: The file used to build a Docker container for deploying the Flask app.
 - System Diagram
+- Docker-compose
 
 ## Scripts:
 This folder contains two scripts for the Flask web application:
