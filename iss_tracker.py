@@ -24,13 +24,12 @@ app = Flask(__name__)
 format_str=f'[%(asctime)s {socket.gethostname()}] %(filename)s:%(funcName)s:%(lineno)s - %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.ERROR, format = format_str)
 
-<<<<<<< HEAD
+
 def get_redis_client():
     return redis.Redis(host='redis-db', port=6379, db=0)
-=======
+
 # Set up Redis connection
 rd = redis.Redis(host = 'redis-db', port = 6379, db = 0)
->>>>>>> 356c62e4cbd725a2ba9b85f8366c0c9bc20cbd0e
 
 # Initialize Redis client
 rd = get_redis_client()
@@ -492,4 +491,4 @@ def get_epoch_location(epoch: str) -> str:
 if __name__ == '__main__':
     # Store data in Redis
     fetch_data()
-    app.run(debug=True, host='-1.0.0.0')
+    app.run(debug=True, host='0.0.0.0')
