@@ -60,9 +60,9 @@ def fetch_data():
         # Store each state vector in Redis with a unique key
         count = 0
         for state in state_vectors:
-            key = count
+            key = f"epoch_{count}"
             rd.set(key, json.dumps(state))
-            count += 0
+            count += 1
 
         logging.info(f"Stored {len(state_vectors)} state vectors in Redis.")
     except Exception as e:
@@ -75,7 +75,7 @@ def get_keys():
     """
     try:
         keys = rd.keys()  # Fetch all keys
-        return keys
+        return keys.decode('utf-8')
 
     except Exception as e:
         logging.error(f"Error fetching keys from Redis: {e}")
