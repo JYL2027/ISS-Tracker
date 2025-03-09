@@ -96,8 +96,8 @@ def fetch_data_from_redis() -> List[dict]:
 
         for key in keys:
             data = rd.get(key)
-                state_vector = json.loads(data.decode('utf-8'))
-                state_vectors.append(state_vector)
+            state_vector = json.loads(data.decode('utf-8'))
+            state_vectors.append(state_vector)
         
         logging.info(f"Fetched {len(state_vectors)} state vectors from Redis.")
         return state_vectors
@@ -215,56 +215,51 @@ def calc_closest_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_s
 @app.route('/epochs', methods = ['GET'])
 def get_epochs() -> Response:
     """
-    Returns a dataset of epochs and their state vector data in XML format
+    Returns a dataset of epochs and their state vector datas
 
     Query Parameters:
         limit (int): Number of epochs to return
         offset (int): Number of epochs to skip before starting
 
     Returns:
-        XML Response with filtered epochs and their state vector data
+        Response with filtered epochs and their state vector data
     """
 
-    state_vectors = fetch_data_from_redis()
-    if state_vectors is None:
-        logging.error("Error no data")
-        return "Error no data", 500  
+    try:
+        # Fetch all keys from Redis
+        keys = rd.keys()
+        if not keys:
+            logging.error("No data available in Redis")
+            
+        # Handle query parameters for filtering
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', type=int, default=0)
 
-    # Handle query parameters for filtering
-    limit = request.args.get('limit', type=int)
-    offset = request.args.get('offset', type=int, default=0)
+        logging.debug(f"Query params - limit: {limit}, offset: {offset}")
 
-    logging.debug(f"Query params - limit: {limit}, offset: {offset}")
-    
-    if offset < 0 or offset >= len(state_vectors):
-        logging.warning("Offset is out of range")
-        return "Error: Offset out of range", 400
+        # Validate offset
+        if offset < 0 or offset >= len(keys):
+            logging.warning("Offset is out of range")
 
-    logging.debug("Applying filters")
+        # Apply filtering
+        filtered_keys = keys[offset:offset + limit] if limit is not None else keys[offset:]
 
-    # Apply filtering 
-    if limit is not None:
-        filtered_data = []
-        count = 0
+        # Fetch data for filtered keys
+        state_vectors = []
+        for key in filtered_keys:
+            data = rd.get(key)
+            if data:
+                state_vector = json.loads(data.decode('utf-8')) 
+                state_vectors.append(state_vector)
 
-        for i in range(offset, len(state_vectors)):
-            if count >= limit:
-                break
-            filtered_data.append(state_vectors[i])  
-            count += 1
-        state_vectors = filtered_data  
-        
-    elif offset is not None: 
-        filtered_data = []
+        logging.debug(f"Fetched {len(state_vectors)} state vectors from Redis.")
 
-        for i in range(offset, len(state_vectors)):
-            filtered_data.append(state_vectors[i])  
+        # Return the filtered state vectors as a JSON response
+        return state_vectors
 
-        state_vectors = filtered_data 
-
-    logging.debug("Applying pretty print")
-
-    return state_vectors
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+        return 
 
 @app.route('/epochs/<epoch>', methods = ['GET'])
 def get_epoch_data(epoch: str) -> str:
