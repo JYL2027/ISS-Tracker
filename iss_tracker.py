@@ -98,7 +98,6 @@ def fetch_data_from_redis() -> list[dict]:
         return state_vectors
     except Exception as e:
         logging.error(f"Error during data fetch from Redis: {e}")
-<<<<<<< HEAD
     
 def calc_average_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> float:
     """
@@ -140,13 +139,11 @@ def calc_average_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_s
     logging.debug(f"Calculated average speed: {average_speed} km/s")
 
     return average_speed
-=======
         return None
 
     except Exception as e:
         logging.error(f"Error during data fetch from Redis: {e}")
         return None
->>>>>>> 851b96550fc38edc6fa6a4a94cb54091fbb0adf1
 
 def calc_closest_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> Tuple[float, dict, dict]:
     """
