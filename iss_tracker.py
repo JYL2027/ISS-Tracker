@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import xmltodict
+import json
 import logging
 import requests
 import math
@@ -27,9 +28,6 @@ logging.basicConfig(level=logging.ERROR, format = format_str)
 
 def get_redis_client():
     return redis.Redis(host='redis-db', port=6379, db=0)
-
-# Set up Redis connection
-rd = redis.Redis(host = 'redis-db', port = 6379, db = 0)
 
 # Initialize Redis client
 rd = get_redis_client()
@@ -64,7 +62,8 @@ def fetch_data():
         # Store in Redis
         count = 0.
         for state in state_vectors:
-            rd.set(count, state)
+            # Convert OrderedDict to a JSON string
+            rd.set(count, json.dumps(state))
             count += 1
         
         logging.info("Data stored in Redis.")
@@ -84,8 +83,8 @@ def fetch_data_from_redis():
         state_vectors = []
         count = 0
         while rd.exists(count):  
-            state = rd.get(count).decode('utf-8')
-            state_vectors.append(state)
+            state = json.loads(rd.get(count).decode('utf-8'))
+            state_vetors.append(state)
             count += 1
         logging.info("Data fetched from Redis.")
         return state_vectors
