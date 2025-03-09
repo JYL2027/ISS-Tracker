@@ -60,6 +60,7 @@ def fetch_data():
         # Store each state vector in Redis with a unique key
         count = 0
         for state in state_vectors:
+            key = count
             rd.set(key, json.dumps(state))
             count += 0
 
@@ -74,11 +75,9 @@ def get_keys():
     """
     try:
         keys = rd.keys()  # Fetch all keys
-        decoded_keys = [key.decode('utf-8') for key in keys]  # Decode bytes to strings
         return {
-            "keys": decoded_keys,
-            "status": "success"
-        }, 200
+                keys
+        }
     except Exception as e:
         logging.error(f"Error fetching keys from Redis: {e}")
         return {
@@ -225,42 +224,44 @@ def get_epochs() -> Response:
         Response with filtered epochs and their state vector data
     """
 
-    try:
-        # Fetch all keys from Redis
-        keys = rd.keys()
-        if not keys:
-            logging.error("No data available in Redis")
-            
-        # Handle query parameters for filtering
-        limit = request.args.get('limit', type=int)
-        offset = request.args.get('offset', type=int, default=0)
+    state_vectors = get_data_from_redis()
+    if state_vectors is None:
+        logging.error("Error no data")
 
-        logging.debug(f"Query params - limit: {limit}, offset: {offset}")
+    # Handle query parameters for filtering
+    limit = request.args.get('limit', type=int)
+    offset = request.args.get('offset', type=int, default=0)
 
-        # Validate offset
-        if offset < 0 or offset >= len(keys):
-            logging.warning("Offset is out of range")
+    logging.debug(f"Query params - limit: {limit}, offset: {offset}")
+    
+    if offset < 0 or offset >= len(state_vectors):
+        logging.warning("Offset is out of range")
+        return "Error: Offset out of range", 400
 
-        # Apply filtering
-        filtered_keys = keys[offset:offset + limit] if limit is not None else keys[offset:]
+    logging.debug("Applying filters")
 
-        # Fetch data for filtered keys
-        state_vectors = []
-        for key in filtered_keys:
-            data = rd.get(key)
-            if data:
-                state_vector = json.loads(data.decode('utf-8')) 
-                state_vectors.append(state_vector)
+    # Apply filtering 
+    if limit is not None:
+        filtered_data = []
+        count = 0
 
-        logging.debug(f"Fetched {len(state_vectors)} state vectors from Redis.")
+        for i in range(offset, len(state_vectors)):
+            if count >= limit:
+                break
+            filtered_data.append(state_vectors[i])  
+            count += 1
+        state_vectors = filtered_data  
+        
+    elif offset is not None: 
+        filtered_data = []
 
-        # Return the filtered state vectors as a JSON response
-        return state_vectors
+        for i in range(offset, len(state_vectors)):
+            filtered_data.append(state_vectors[i])  
 
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}")
-        return 
+        state_vectors = filtered_data 
 
+    return print(state_vectors
+                 )
 @app.route('/epochs/<epoch>', methods = ['GET'])
 def get_epoch_data(epoch: str) -> str:
     """
