@@ -75,17 +75,13 @@ def get_keys():
     """
     try:
         keys = rd.keys()  # Fetch all keys
-        return {
-                keys
-        }
+        return keys
+
     except Exception as e:
         logging.error(f"Error fetching keys from Redis: {e}")
-        return {
-            "error": "Failed to fetch keys from Redis",
-            "status": "error"
-        }, 500
+        return 
 
-def fetch_data_from_redis() -> List[dict]:
+def fetch_data_from_redis() -> list[dict]:
     """
     Fetches all data from Redis and returns it as a list of dictionaries.
     """
@@ -95,7 +91,7 @@ def fetch_data_from_redis() -> List[dict]:
 
         for key in keys:
             data = rd.get(key)
-            state_vector = json.loads(data.decode('utf-8'))
+            state_vector = json.loads(data.decode('utf-9'))
             state_vectors.append(state_vector)
         
         logging.info(f"Fetched {len(state_vectors)} state vectors from Redis.")
@@ -107,47 +103,6 @@ def fetch_data_from_redis() -> List[dict]:
     except Exception as e:
         logging.error(f"Error during data fetch from Redis: {e}")
         return None
-
-def calc_average_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> float:
-    """
-    This function calculates the average speed of the ISS over all the data entries
-
-    Args:
-        data_list_of_dicts (List[dict]): A list of dictionaries of all the information of each time stamp of the ISS created when reading the XML requested from the data url.
-
-        x_key_speed (str): The key string containing data about the x position of velocity
-
-        y_key_speed (str): The key string containing data about the y position of velocity
-
-        z_key_speed (str): The key string containing data about the z position of velocity
-
-    Returns:
-        average_speed (float): The function returns the average magnitude of velocity (speed) across the whole data set
-    """ 
-
-    logging.debug("Computing average speed...")
-    
-    if not data_list_of_dicts:
-        raise ValueError("No data available to compute average speed")
-        
-    average_speed = 0.
-
-    for i in range(len(data_list_of_dicts)):
-        try:
-            x_component = float(data_list_of_dicts[i][x_key_speed]["#text"])
-            y_component = float(data_list_of_dicts[i][y_key_speed]["#text"])
-            z_component = float(data_list_of_dicts[i][z_key_speed]["#text"])
-
-            average_speed += math.sqrt(x_component**2 + y_component**2 + z_component**2)
-            logging.debug(f"Row {i}: Successfully added components = {x_component}, {y_component}, {z_component}")
-
-        except (ValueError, KeyError) as e:
-            logging.warning(f"Skipping row {i} due to invalid mass data: {e} ")
-
-    average_speed = average_speed / len(data_list_of_dicts)
-    logging.debug(f"Calculated average speed: {average_speed} km/s")
-
-    return average_speed
 
 def calc_closest_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> Tuple[float, dict, dict]:
     """
@@ -212,7 +167,7 @@ def calc_closest_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_s
     return closest_speed, closest_time, closest_epoch
 
 @app.route('/epochs', methods = ['GET'])
-def get_epochs() -> Response:
+def get_epochs() -> list[dict]:
     """
     Returns a dataset of epochs and their state vector datas
 
@@ -224,7 +179,7 @@ def get_epochs() -> Response:
         Response with filtered epochs and their state vector data
     """
 
-    state_vectors = get_data_from_redis()
+    state_vectors = fetch_data_from_redis()
     if state_vectors is None:
         logging.error("Error no data")
 
@@ -260,8 +215,8 @@ def get_epochs() -> Response:
 
         state_vectors = filtered_data 
 
-    return print(state_vectors
-                 )
+    return state_vectors
+
 @app.route('/epochs/<epoch>', methods = ['GET'])
 def get_epoch_data(epoch: str) -> str:
     """
