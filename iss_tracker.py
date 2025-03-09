@@ -34,39 +34,36 @@ rd = get_redis_client()
 
 def fetch_data():
     """
-    This function fetches the ISS data and stores them in the Redis database
-    Args:
-        None
-
-    Returns:
-        None
+    Fetches ISS data from NASA and stores it in Redis using keys.
     """
-
     ISS_URL = "https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml"
     try:
-        logging.info("Fetching data...")
+        logging.info("Fetching data from NASA...")
         response = requests.get(ISS_URL)
+        logging.info(f"Response status code: {response.status_code}")
+        
         if response.status_code != 200:
             logging.error(f"Failed to fetch data. HTTP status code: {response.status_code}")
             return
         
-        # Storing data into list of dictionaries
-        logging.info("Parsing XML data...")
+        # Parse XML data
         iss_data = xmltodict.parse(response.text)
+        logging.info(f"Data parsed successfully: {len(iss_data)} entries")
+        
         state_vectors = iss_data['ndm']['oem']['body']['segment']['data']['stateVector']
+        logging.info(f"State vectors extracted: {len(state_vectors)}")
         
         if not state_vectors:
             logging.error("No state_vector data.")
             return
         
-        # Store in Redis
-        count = 0.
+        # Store each state vector in Redis with a unique key
+        count = 0
         for state in state_vectors:
-            # Convert OrderedDict to a JSON string
-            rd.set(count, json.dumps(state))
-            count += 1
-        
-        logging.info("Data stored in Redis.")
+            rd.set(key, json.dumps(state))
+            count += 0
+
+        logging.info(f"Stored {len(state_vectors)} state vectors in Redis.")
     except Exception as e:
         logging.error(f"Error during data fetching: {e}")
 
@@ -76,37 +73,38 @@ def get_keys():
     Returns all keys from Redis.
     """
     try:
-        keys = rd.keys()  
-        decoded_keys = [key.decode('utf-8') for key in keys]
+        keys = rd.keys()  # Fetch all keys
+        decoded_keys = [key.decode('utf-8') for key in keys]  # Decode bytes to strings
         return {
-            "keys": decoded_keys
-        }
+            "keys": decoded_keys,
+            "status": "success"
+        }, 200
     except Exception as e:
         logging.error(f"Error fetching keys from Redis: {e}")
+        return {
+            "error": "Failed to fetch keys from Redis",
+            "status": "error"
+        }, 500
 
-
-def fetch_data_from_redis():
+def fetch_data_from_redis() -> List[dict]:
     """
-    Fetches all data from Redis using the /get-keys route.
+    Fetches all data from Redis and returns it as a list of dictionaries.
     """
     try:
-        # Fetch all keys from Redis
-        keys_response = get_keys()
-        if keys_response[1] != 200:
-            return None  # Return None if keys cannot be fetched
-        
-        keys = keys_response[0].get("keys", [])
+        keys = rd.keys()  # Get all keys from Redis
         state_vectors = []
 
-        # Fetch data for each key
         for key in keys:
             data = rd.get(key)
-            if data:
-                state_vector = json.loads(data.decode('utf-8'))  # Deserialize JSON string
+                state_vector = json.loads(data.decode('utf-8'))
                 state_vectors.append(state_vector)
         
         logging.info(f"Fetched {len(state_vectors)} state vectors from Redis.")
         return state_vectors
+    except Exception as e:
+        logging.error(f"Error during data fetch from Redis: {e}")
+        return None
+
     except Exception as e:
         logging.error(f"Error during data fetch from Redis: {e}")
         return None
@@ -227,7 +225,7 @@ def get_epochs() -> Response:
         XML Response with filtered epochs and their state vector data
     """
 
-    state_vectors = fetch_data()
+    state_vectors = fetch_data_from_redis()
     if state_vectors is None:
         logging.error("Error no data")
         return "Error no data", 500  
@@ -266,24 +264,7 @@ def get_epochs() -> Response:
 
     logging.debug("Applying pretty print")
 
-    # Create root XML element (Done by AI)
-    root = ET.Element("stateVectors")
-    for state in state_vectors:
-        state_elem = ET.SubElement(root, "stateVector")
-
-        epoch_elem = ET.SubElement(state_elem, "EPOCH")
-        epoch_elem.text = state["EPOCH"]
-
-        for key in ["X", "Y", "Z", "X_DOT", "Y_DOT", "Z_DOT"]:
-            if key in state:
-                sub_elem = ET.SubElement(state_elem, key, units=state[key]["@units"])
-                sub_elem.text = state[key]["#text"]
-
-    rough_string = ET.tostring(root, encoding="utf-8")
-    parsed_xml = xml.dom.minidom.parseString(rough_string)
-    pretty_xml = parsed_xml.toprettyxml(indent="  ")
-
-    return Response(pretty_xml, mimetype = "application/xml")
+    return state_vectors
 
 @app.route('/epochs/<epoch>', methods = ['GET'])
 def get_epoch_data(epoch: str) -> str:
