@@ -102,12 +102,7 @@ def fetch_data_from_redis() -> List[dict]:
         return state_vectors
     except Exception as e:
         logging.error(f"Error during data fetch from Redis: {e}")
-        return None
-
-    except Exception as e:
-        logging.error(f"Error during data fetch from Redis: {e}")
-        return None
-
+    
 def calc_average_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> float:
     """
     This function calculates the average speed of the ISS over all the data entries
