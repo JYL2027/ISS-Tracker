@@ -56,13 +56,16 @@ def fetch_data():
         if not state_vectors:
             logging.error("No state_vector data.")
             return
-        
-        # Store each state vector in Redis with a unique key
-        count = 0
-        for state in state_vectors:
-            key = f"epoch_{count}"
-            rd.set(key, json.dumps(state))
-            count += 1
+
+        # Iterate over the state vectors and store each one in Redis with a unique key
+        for i, state_vector in enumerate(state_vectors):
+            # Generate a unique key for each state vector (you can use the index and timestamp)
+            redis_key = f"iss_state_vector{i}"
+
+            state_vector_json = json.dumps(state_vector)
+
+            rd.set(redis_key, state_vector_json)
+            logging.info(f"State vector stored in Redis with key: {redis_key}")
 
         logging.info(f"Stored {len(state_vectors)} state vectors in Redis.")
     except Exception as e:
@@ -74,8 +77,10 @@ def get_keys():
     Returns all keys from Redis.
     """
     try:
-        keys = rd.keys()  # Fetch all keys
-        return keys.decode('utf-8')
+        keys = rd.keys() 
+        decoded_keys = [key.decode('utf-8') for key in keys]  # Decode each key
+        return json.dumps(decoded_keys)  # Return the list as a JSON response
+
 
     except Exception as e:
         logging.error(f"Error fetching keys from Redis: {e}")
@@ -91,7 +96,7 @@ def fetch_data_from_redis() -> list[dict]:
 
         for key in keys:
             data = rd.get(key)
-            state_vector = json.loads(data.decode('utf-9'))
+            state_vector = json.loads(data.decode('utf-8'))
             state_vectors.append(state_vector)
         
         logging.info(f"Fetched {len(state_vectors)} state vectors from Redis.")
