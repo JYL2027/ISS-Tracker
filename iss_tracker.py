@@ -95,7 +95,7 @@ def fetch_data_from_redis() -> list[dict]:
         state_vectors = []
 
         for key in keys:
-            data = rd.get(key)
+            data = rd.get(key.decode('utf-8')) 
             state_vector = json.loads(data.decode('utf-8'))
             state_vectors.append(state_vector)
         
