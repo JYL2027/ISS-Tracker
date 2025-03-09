@@ -70,28 +70,46 @@ def fetch_data():
     except Exception as e:
         logging.error(f"Error during data fetching: {e}")
 
-def fetch_data_from_redis():
+@app.route('/get-keys', methods=['GET'])
+def get_keys():
     """
-    Fetches data from Redis and returns it.
-
-    Returns:
-        state_vectors (list): A list of dictionaries representing state vectors
+    Returns all keys from Redis.
     """
     try:
-        logging.info("Fetching data from Redis...")
-        # Initialize list
+        keys = rd.keys()  
+        decoded_keys = [key.decode('utf-8') for key in keys]
+        return {
+            "keys": decoded_keys
+        }
+    except Exception as e:
+        logging.error(f"Error fetching keys from Redis: {e}")
+
+
+def fetch_data_from_redis():
+    """
+    Fetches all data from Redis using the /get-keys route.
+    """
+    try:
+        # Fetch all keys from Redis
+        keys_response = get_keys()
+        if keys_response[1] != 200:
+            return None  # Return None if keys cannot be fetched
+        
+        keys = keys_response[0].get("keys", [])
         state_vectors = []
-        count = 0
-        while rd.exists(count):  
-            state = json.loads(rd.get(count).decode('utf-8'))
-            state_vetors.append(state)
-            count += 1
-        logging.info("Data fetched from Redis.")
+
+        # Fetch data for each key
+        for key in keys:
+            data = rd.get(key)
+            if data:
+                state_vector = json.loads(data.decode('utf-8'))  # Deserialize JSON string
+                state_vectors.append(state_vector)
+        
+        logging.info(f"Fetched {len(state_vectors)} state vectors from Redis.")
         return state_vectors
-    
     except Exception as e:
         logging.error(f"Error during data fetch from Redis: {e}")
-        return
+        return None
 
 def calc_average_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> float:
     """
