@@ -60,9 +60,9 @@ def fetch_data():
         # Store each state vector in Redis with a unique key
         count = 0
         for state in state_vectors:
-            key = count
+            key = f"epoch_{count}"
             rd.set(key, json.dumps(state))
-            count += 0
+            count += 1
 
         logging.info(f"Stored {len(state_vectors)} state vectors in Redis.")
     except Exception as e:
@@ -75,17 +75,13 @@ def get_keys():
     """
     try:
         keys = rd.keys()  # Fetch all keys
-        return {
-                keys
-        }
+        return keys.decode('utf-8')
+
     except Exception as e:
         logging.error(f"Error fetching keys from Redis: {e}")
-        return {
-            "error": "Failed to fetch keys from Redis",
-            "status": "error"
-        }, 500
+        return 
 
-def fetch_data_from_redis() -> List[dict]:
+def fetch_data_from_redis() -> list[dict]:
     """
     Fetches all data from Redis and returns it as a list of dictionaries.
     """
@@ -95,13 +91,14 @@ def fetch_data_from_redis() -> List[dict]:
 
         for key in keys:
             data = rd.get(key)
-            state_vector = json.loads(data.decode('utf-8'))
+            state_vector = json.loads(data.decode('utf-9'))
             state_vectors.append(state_vector)
         
         logging.info(f"Fetched {len(state_vectors)} state vectors from Redis.")
         return state_vectors
     except Exception as e:
         logging.error(f"Error during data fetch from Redis: {e}")
+<<<<<<< HEAD
     
 def calc_average_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> float:
     """
@@ -143,6 +140,13 @@ def calc_average_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_s
     logging.debug(f"Calculated average speed: {average_speed} km/s")
 
     return average_speed
+=======
+        return None
+
+    except Exception as e:
+        logging.error(f"Error during data fetch from Redis: {e}")
+        return None
+>>>>>>> 851b96550fc38edc6fa6a4a94cb54091fbb0adf1
 
 def calc_closest_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> Tuple[float, dict, dict]:
     """
@@ -207,7 +211,7 @@ def calc_closest_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_s
     return closest_speed, closest_time, closest_epoch
 
 @app.route('/epochs', methods = ['GET'])
-def get_epochs() -> Response:
+def get_epochs() -> list[dict]:
     """
     Returns a dataset of epochs and their state vector datas
 
@@ -219,7 +223,7 @@ def get_epochs() -> Response:
         Response with filtered epochs and their state vector data
     """
 
-    state_vectors = get_data_from_redis()
+    state_vectors = fetch_data_from_redis()
     if state_vectors is None:
         logging.error("Error no data")
 
@@ -255,8 +259,8 @@ def get_epochs() -> Response:
 
         state_vectors = filtered_data 
 
-    return print(state_vectors
-                 )
+    return state_vectors
+
 @app.route('/epochs/<epoch>', methods = ['GET'])
 def get_epoch_data(epoch: str) -> str:
     """
