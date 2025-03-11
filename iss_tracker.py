@@ -44,7 +44,7 @@ def fetch_data():
     # Check if Redis already has ISS data
     if rd.keys():
         logging.info("Redis already contains ISS data.")
-        return False
+        return 
     
     try:
         logging.info("Fetching data from NASA...")
