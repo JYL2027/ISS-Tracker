@@ -30,17 +30,18 @@ The system diagram above depicts how the scripts and files in the directory inte
 To access the data used in this homework, please use this link: https://spotthestation.nasa.gov/trajectory_data.cfm. The data presented are given in both `txt` and `XML` formats. To view them, please download them onto your computer. The ISS trajectory data is publicly available and maintained by the ISS Trajectory Operations and Planning Officer (TOPO) at NASA’s Johnson Space Center. The ISS’s position is continuously tracked, and its predicted trajectory is updated approximately three times a week to ensure accuracy. This data is critical for maintaining communication links, planning vehicle rendezvous, and avoiding potential collisions. 
    
 ## Building container and running code (Username is your Docker Hub Username):
-1. **Build Docker image**: First, make sure everything in this homework is in the same directory. In the terminal, please run the command: `docker build -t username/flask-homework05:1.0 .`
-2. **Run Docker**: To run the container, please run the command: `docker run --name "flask-homework05-app" -d -p 5000:5000 username/flask-homework05:1.0`. By doing this, you will be running the container in the background due to the `-d` flag. Moreover, the `-p` flag maps a port on the VM (5000) to a port inside the container (5000). The output given by this command should be the ID of the container; please mark this ID down to remove the container after you are done with the operations. 
-3. **Final Steps**: Now that you have the container running, you must use curl commands to access routes to get the data you want.
-4. **Interpret Output**: Here, I will describe the curl commands and what output you should expect.
+1. **Build Docker image**: First, make sure everything in this homework is in the same directory. In the terminal, please run the command: `docker build -t username/flask-iss_tracker:1.0 .`
+2. **Docker Compose**: Next, use a text editor to edit the docker-compose file. Replace the username part of the file with your docker hub username.
+3. **Run Docker**: To run the container, please run the command: `docker compouse up -d`. The `-d` flags allow the containers to run in the background. 
+4. **Final Steps**: Now that you have the container running, you must use curl commands to access routes to get the data you want.
+5. **Interpret Output**: Here, I will describe the curl commands and what output you should expect.
    - `curl localhost:5000/epochs`: Returns the entire data set in XML format
    - `curl localhost:5000/epochs?limit=int&offset=int`: Returns modified list of Epochs given the query parameters limit and offset in XML format. To do this, place a number in place of the `int` in the curl command. The limit query limits the amount of data outputted, while offset will offset the data being outputted by the amount given.
    - `curl localhost:5000/epochs/<epoch>`: Returns the state vectors for a specific Epoch from the data set. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
    - `curl localhost:5000/epochs/<epoch>/speed`: Returns the instantaneous speed of a specific Epoch from the data set in km/s. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
    - `curl localhost:5000/now`: Returns the state vectors as vectors and the instantaneous speed for the EPOCH closest to the call time.
-5. **Pytest**: If you want to run the unit tests, please run the command `docker exec -it flask-homework05-app bash` on the command line to attach to the container. Then run `pytest test_iss_tracker.py` to run the unit tests.
-6. **Cleanup**: After you are done with the analysis, please run these commands to clean up and remove the container. (ID is the container ID provided after running the container) `docker stop ID` and `docker rm ID`
+6. **Pytest**: If you want to run the unit tests, please run the command `docker exec -it flask-homework05-app bash` on the command line to attach to the container. Then run `pytest test_iss_tracker.py` to run the unit tests.
+7. **Cleanup**: After you are done with the analysis, please run these commands to clean up and remove the container. (ID is the container ID provided after running the container) `docker stop ID` and `docker rm ID`
    
 ## AI Use (Chat GPT): 
 1. AI was used to produce the exception test cases in `test_iss_tracker.py`. I used AI here because I did not know what tests would be reasonable tests for my functions.
