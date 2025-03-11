@@ -84,9 +84,9 @@ def get_keys():
     """
     try:
         keys = rd.keys() 
-        decoded_keys = [key.decode('utf-8') for key in keys]  # Decode each key
-        return json.dumps(decoded_keys)  # Return the list as a JSON response
-
+        decoded_keys = [key.decode('utf-8') for key in keys]  
+        return json.dumps(decoded_keys)  
+    
     except Exception as e:
         logging.error(f"Error fetching keys from Redis: {e}")
         return 
@@ -275,23 +275,14 @@ def get_epoch_data(epoch: str) -> str:
     Returns:
         result (str): The state vector data of a particular epoch
     """
-    state_vectors = fetch_data_from_redis()
+    epoch_match = rd.get(epoch)
 
-    if not state_vectors:
+    if not epoch_match:
         logging.error("No data available")
         return ("Error no data")
-    
-    epoch_match = None
 
     logging.debug("Matching epochs...")
 
-    # Loop through each state vector in the list of state_vectors
-    for s_v in state_vectors:
-        if s_v["EPOCH"] == epoch:  
-            epoch_match = s_v
-            # Exit the loop
-            break 
-    
     logging.debug("Match found")
 
     try: 
@@ -321,21 +312,12 @@ def get_epoch_speed(epoch: str) -> str:
         speed (str): The calculated speed in km/s of a certain epoch
     """
 
-    state_vectors = fetch_data_from_redis()
-    if not state_vectors:
+    epoch_data = rd.get(epoch)
+    if not epoch_data:
         logging.error("No data available")
         return ("Error no data")
 
-    epoch_data = None
-
     logging.debug("Matching epochs...")
-
-    # Loop through each state vector in the list of state_vectors
-    for s_v in state_vectors:
-        if s_v["EPOCH"] == epoch:  
-            epoch_data = s_v
-            # Exit the loop
-            break 
 
     logging.debug("Match found")
 
@@ -474,10 +456,10 @@ def get_epoch_location(epoch: str) -> str:
         logging.info(f"Location for epoch {epoch} calculated successfully.")
 
         return {
-            "lat": lat,
-            "lon": lon,
-            "alt": alt,
-            "geoloc": geoloc_address
+            "Latitude": lat,
+            "Longitude": lon,
+            "Altitude": alt,
+            "Geolocation": geoloc_address
         }
     
     except Exception as e:
