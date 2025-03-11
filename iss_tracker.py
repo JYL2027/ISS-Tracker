@@ -8,9 +8,7 @@ import socket
 import time
 from typing import List
 from typing import Tuple
-from flask import Flask, Response, request
-import xml.etree.ElementTree as ET
-import xml.dom.minidom
+from flask import Flask, request
 import redis
 from astropy import coordinates
 from astropy import units
@@ -25,7 +23,6 @@ app = Flask(__name__)
 format_str=f'[%(asctime)s {socket.gethostname()}] %(filename)s:%(funcName)s:%(lineno)s - %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.ERROR, format = format_str)
 
-
 def get_redis_client():
     return redis.Redis(host='redis-db', port=6379, db=0)
 
@@ -34,7 +31,13 @@ rd = get_redis_client()
 
 def fetch_data():
     """
-    Fetches ISS data from NASA and stores it in Redis using keys.
+    Fetches ISS data from NASA and stores it in Redis using keys which are the EPOCH. Each state vector and its information are stored in a seperate key.
+
+    Args:
+        None
+    
+    Returns:
+        None
     """
     ISS_URL = "https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml"
     
@@ -46,13 +49,14 @@ def fetch_data():
     try:
         logging.info("Fetching data from NASA...")
         response = requests.get(ISS_URL)
+
         logging.info(f"Response status code: {response.status_code}")
         
         if response.status_code != 200:
-            logging.error(f"Failed to fetch data. HTTP status code: {response.status_code}")
+            logging.error(f"Failed to fetch data. Status code: {response.status_code}")
             return
         
-        # Parse XML data
+        # Parse the XML data
         iss_data = xmltodict.parse(response.text)
         logging.info(f"Data parsed successfully: {len(iss_data)} entries")
         
@@ -63,100 +67,51 @@ def fetch_data():
             logging.error("No state_vector data.")
             return
 
-        # Iterate over the state vectors and store each one in Redis with a unique key
-        for i, state_vector in enumerate(state_vectors):
-            # Generate a unique key for each state vector (you can use the index and timestamp)
+        # Iterate over the state vectors and store each one in Redis with a unique EPOCH key
+        for state_vector in (state_vectors):
             redis_key = state_vector['EPOCH']
 
+            # Convert to json and dump as seen in class
             state_vector_json = json.dumps(state_vector)
 
             rd.set(redis_key, state_vector_json)
             logging.info(f"State vector stored in Redis with key: {redis_key}")
 
-        logging.info(f"Stored {len(state_vectors)} state vectors in Redis.")
     except Exception as e:
         logging.error(f"Error during data fetching: {e}")
 
-@app.route('/get-keys', methods=['GET'])
-def get_keys():
-    """
-    Returns all keys from Redis.
-    """
-    try:
-        keys = rd.keys() 
-        decoded_keys = [key.decode('utf-8') for key in keys]  
-        return json.dumps(decoded_keys)  
-    
-    except Exception as e:
-        logging.error(f"Error fetching keys from Redis: {e}")
-        return 
-
 def fetch_data_from_redis() -> list[dict]:
     """
-    Fetches all data from Redis and returns it as a list of dictionaries.
+    This function fetches all data from Redis and returns it as a list of dictionaries.
+
+    Args:
+        None
+
+    Returns:
+        state_vectors (list[dict]): All of the state vector data as a list of dictionaries
     """
     try:
-        keys = rd.keys()  # Get all keys from Redis
+        # Get all keys from Redis
+        keys = rd.keys()  
         state_vectors = []
 
         for key in keys:
             data = rd.get(key.decode('utf-8')) 
             state_vector = json.loads(data.decode('utf-8'))
             state_vectors.append(state_vector)
-        
-        logging.info(f"Fetched {len(state_vectors)} state vectors from Redis.")
+
+        logging.info(f"Fetched {len(state_vectors)} state vectors from Redis so far.")
+
         return state_vectors
     except Exception as e:
-        logging.error(f"Error during data fetch from Redis: {e}")
-    
-def calc_average_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> float:
-    """
-    This function calculates the average speed of the ISS over all the data entries
-
-    Args:
-        data_list_of_dicts (List[dict]): A list of dictionaries of all the information of each time stamp of the ISS created when reading the XML requested from the data url.
-
-        x_key_speed (str): The key string containing data about the x position of velocity
-
-        y_key_speed (str): The key string containing data about the y position of velocity
-
-        z_key_speed (str): The key string containing data about the z position of velocity
-
-    Returns:
-        average_speed (float): The function returns the average magnitude of velocity (speed) across the whole data set
-    """ 
-
-    logging.debug("Computing average speed...")
-    
-    if not data_list_of_dicts:
-        raise ValueError("No data available to compute average speed")
-        
-    average_speed = 0.
-
-    for i in range(len(data_list_of_dicts)):
-        try:
-            x_component = float(data_list_of_dicts[i][x_key_speed]["#text"])
-            y_component = float(data_list_of_dicts[i][y_key_speed]["#text"])
-            z_component = float(data_list_of_dicts[i][z_key_speed]["#text"])
-
-            average_speed += math.sqrt(x_component**2 + y_component**2 + z_component**2)
-            logging.debug(f"Row {i}: Successfully added components = {x_component}, {y_component}, {z_component}")
-
-        except (ValueError, KeyError) as e:
-            logging.warning(f"Skipping row {i} due to invalid mass data: {e} ")
-
-    average_speed = average_speed / len(data_list_of_dicts)
-    logging.debug(f"Calculated average speed: {average_speed} km/s")
-
-    return average_speed
- 
+        logging.error(f"Error during Redis data fetch: {e}")
 
 def calc_closest_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_speed: str, z_key_speed: str) -> Tuple[float, dict, dict]:
     """
     This function calculates and returns the most recent speed of the ISS compared to our time now, the time from the data set that is closest to when the script was ran, and the dictionary for that data set
 
     Args:
-        data_list_of_dicts (List[dict]): A list of dictionaries of all the information of each time stamp of the ISS created when reading the XML requested from the data url.
+        data_list_of_dicts (List[dict]): A list of dictionaries of all the information of each time stamp of the ISS created when reading the requested data.
 
         x_key_speed (str): The key string containing data about the x position of velocity
 
@@ -216,14 +171,17 @@ def calc_closest_speed(data_list_of_dicts: List[dict], x_key_speed: str, y_key_s
 @app.route('/epochs', methods = ['GET'])
 def get_epochs() -> list[dict]:
     """
-    Returns a dataset of epochs and their state vector datas
+    Returns all the datasets or a limited amount of epochs and their state vector datas
+
+    Args:
+        none
 
     Query Parameters:
         limit (int): Number of epochs to return
         offset (int): Number of epochs to skip before starting
 
     Returns:
-        Response with filtered epochs and their state vector data
+        The state vectors either with or without filtered epochs and their data
     """
 
     state_vectors = fetch_data_from_redis()
@@ -267,25 +225,26 @@ def get_epochs() -> list[dict]:
 @app.route('/epochs/<epoch>', methods = ['GET'])
 def get_epoch_data(epoch: str) -> str:
     """
-    Returns the state vector for a specific epoch
+    Returns the state vector for a specific epoch requested
 
     Args:
         epoch (str): The epoch timestamp we want to retrieve state vectors from
 
     Returns:
-        result (str): The state vector data of a particular epoch
+        result (str): The state vector data of a the particular epoch being requested
     """
 
-    # Retrieve data
+    # Retrieve data of the specific epoch from the matching epoch key
     epoch_match = rd.get(epoch)
 
     if not epoch_match:
         logging.error("No data available")
         return "Error"
     
-    # Decode and load the data from JSON string to a Python dictionary
+    # Load the data into a Python dictionary
     try:
         epoch_match = json.loads(epoch_match)
+
     except Exception as e:
         logging.error(f"Failed to decode the data: {e}")
         return "Error"
@@ -304,31 +263,31 @@ def get_epoch_data(epoch: str) -> str:
                   f"Z_DOT: {epoch_match['Z_DOT']['#text']} km/s\n")
 
     except (KeyError, ValueError) as e:
-        logging.error(f"Invalid data format: {e}")
-        return "Invalid data format"
+        logging.error(f"Invalid data: {e}")
+        return "Invalid data"
 
     return result
 
 @app.route('/epochs/<epoch>/speed', methods = ['GET'])
 def get_epoch_speed(epoch: str) -> str:
     """
-    This function calculates the instantaneous speed for a specific epoch
+    This function calculates the instantaneous speed for a specific epoch being requested
 
     Args:
-        epoch (str): The epoch timestamp to retrieve the speed from
+        epoch (str): The epoch timestamp to retrieve the instantaneous speed from
 
     Returns:
-        speed (str): The calculated speed in km/s of a certain epoch
+        speed (str): The calculated instantaneous speed in km/s of a certain epoch
     """
 
-    # Retrieve data
+    # Retrieve data for specific epoch 
     epoch_data = rd.get(epoch)
 
     if not epoch_data:
         logging.error("No data available")
         return "Error"
     
-    # Decode and load the data from JSON string to a Python dictionary
+    # Load the data into a Python dictionary
     try:
         epoch_data = json.loads(epoch_data)
     except Exception as e:
@@ -350,21 +309,22 @@ def get_epoch_speed(epoch: str) -> str:
         return (f"Instantaneous speed: {speed} (km/s)\n")
     
     except (KeyError, ValueError) as e:
-        logging.error(f"Invalid data format: {e}")
-        return "Invalid data format"
+        logging.error(f"Invalid data: {e}")
+        return "Invalid data"
 
 @app.route('/now', methods = ['GET'])
 def get_current_state_vector_and_speed() -> str:
     """
-    Return state vector, latitude, longitude, geoposition, and instantaneous speed for the nearest epoch to current time
+    Returns the state vector, latitude, longitude, altitude, geoposition, and instantaneous speed for the nearest epoch to current time
 
     Args:
         None
 
     Returns:
-        response (str): This function returns the state vectors, instantaneous speed, latitude, longitude, and geoposition for the Epoch that is nearest in time as a string
+        response (str): This function returns the state vectors, instantaneous speed, latitude, longitude, altitude and geoposition for the Epoch that is nearest in time as a string
     """
 
+    # Retrieve data
     state_vectors = fetch_data_from_redis()
     if state_vectors is None:
         logging.error("Error no data")
@@ -392,7 +352,7 @@ def get_current_state_vector_and_speed() -> str:
 
         lat, lon, alt = loc.lat.value, loc.lon.value, loc.height.value
     except Exception as e:
-        logging.error(f"Error calculating location with Astropy: {e}")
+        logging.error(f"Error calculating location: {e}")
         return
 
     try:
@@ -401,7 +361,6 @@ def get_current_state_vector_and_speed() -> str:
         geoloc_address = geoloc.address if geoloc else "Unknown Location"
     except Exception as e:
         logging.error(f"GeoPy error: {e}")
-        geoloc_address = "Unknown Location"
 
     # Create the string
     response = (
@@ -428,18 +387,19 @@ def get_epoch_location(epoch: str) -> str:
         The function returns a string that lists the latitude, longitude, altidude and geoposition of the particular epoch in question
     """
 
-    # This code is overall from the coe-332 readthedocs
+    # This code is from the coe-332 readthedocs
     # Retrieve data
     epoch_data = rd.get(epoch)
 
     if not epoch_data:
         logging.error("No data available")
         return "Error"
-    # Decode and load the data from JSON string to a Python dictionary
+    
+    # Load the data to a Python dictionary
     try:
         epoch_data = json.loads(epoch_data)
     except Exception as e:
-        logging.error(f"Failed to decode the data: {e}")
+        logging.error(f"Failed to decode data: {e}")
         return "Error"
     
     try: 
@@ -479,7 +439,7 @@ def get_epoch_location(epoch: str) -> str:
         }
     
     except Exception as e:
-        logging.error(f"Unexpected error: {e}")
+        logging.error(f"Error: {e}")
         return
 
 if __name__ == '__main__':
