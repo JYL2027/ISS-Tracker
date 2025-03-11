@@ -275,7 +275,7 @@ def get_epoch_data(epoch: str) -> str:
     Returns:
         result (str): The state vector data of a particular epoch
     """
-    epoch_match = rd.get(epoch)
+    epoch_match = rd.get(epoch).decode('utf-8')
 
     if not epoch_match:
         logging.error("No data available")
@@ -312,7 +312,7 @@ def get_epoch_speed(epoch: str) -> str:
         speed (str): The calculated speed in km/s of a certain epoch
     """
 
-    epoch_data = rd.get(epoch)
+    epoch_data = rd.get(epoch).decode('utf-8')
     if not epoch_data:
         logging.error("No data available")
         return ("Error no data")
