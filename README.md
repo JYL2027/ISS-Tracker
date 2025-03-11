@@ -49,5 +49,6 @@ To access the data used in this homework, please use this link: https://spotthes
 3. AI was used to generate the test data information in `test_iss_tracker.py`. I used AI for this because I did not have time to create the data myself.
 4. AI was used to convert the given time in the EPOCH to something readable. I used AI for this because I did not know how to do this myself even with research.
 5. AI was used in certain areas to generate warning loggings. AI was used for this because I didn't know the proper way to make sure the generated warning was accurate.
-6. AI was used to output the list of dictionaries back into XML format because I did not know how to revert to XML formatting. 
+6. AI was used to output the list of dictionaries back into XML format because I did not know how to revert to XML formatting.
+7. AI was used in the Dockerfile to allow everything to be pip installed at the same time. I used AI for this because I had no knowledge regarding the process of doing this.
 
