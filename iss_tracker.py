@@ -275,12 +275,23 @@ def get_epoch_data(epoch: str) -> str:
     Returns:
         result (str): The state vector data of a particular epoch
     """
-    epoch_match = rd.get(epoch).decode('utf-8')
+
+    # Retrieve data
+    epoch_match = rd.get(epoch)
+    # Retrieve the data from Redis
+    epoch_match = rd.get(epoch)
 
     if not epoch_match:
-        logging.error("No data available")
-        return ("Error no data")
-
+        logging.error("No data available for the requested epoch.")
+        return "Error"
+    
+    # Decode and load the data from JSON string to a Python dictionary
+    try:
+        epoch_match = json.loads(epoch_match)
+    except Exception as e:
+        logging.error(f"Failed to decode the data: {e}")
+        return "Error"
+    
     logging.debug("Matching epochs...")
 
     logging.debug("Match found")
