@@ -342,6 +342,8 @@ def get_current_state_vector_and_speed() -> str:
     closest_time = time.mktime(time.strptime(closest_epoch["EPOCH"], '%Y-%jT%H:%M:%S.000Z'))
     close_time_readable = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(closest_time))
 
+    geoloc_address = "Unknown"
+
     # Compute location (latitude, longitude, altitude), Code from coe-332 readthedocs
     try:
         this_epoch = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(closest_epoch['EPOCH'][:-5], '%Y-%jT%H:%M:%S'))
