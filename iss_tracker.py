@@ -360,7 +360,8 @@ def get_current_state_vector_and_speed() -> str:
     try:
         geocoder = Nominatim(user_agent="iss_tracker")
         geoloc = geocoder.reverse((lat, lon), zoom=5, language="en")
-        geoloc_address = geoloc.address 
+        if geoloc:
+            geoloc_address = geoloc.address 
     except Exception as e:
         logging.error(f"GeoPy error: {e}")
 
@@ -404,6 +405,8 @@ def get_epoch_location(epoch: str) -> str:
         logging.error(f"Failed to decode data: {e}")
         return "Error"
     
+    geoloc_address = "Unknown"
+
     try: 
         x = float(epoch_data['X']['#text'])
         y = float(epoch_data['Y']['#text'])
@@ -426,7 +429,8 @@ def get_epoch_location(epoch: str) -> str:
         try:
             geocoder = Nominatim(user_agent="iss_tracker")
             geoloc = geocoder.reverse((lat, lon), zoom=15, language="en")
-            geoloc_address = geoloc.address
+            if geoloc:
+                geoloc_address = geoloc.address
         except Exception as e:
             logging.error(f"Error: {e}")
             return
