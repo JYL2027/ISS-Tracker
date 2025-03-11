@@ -342,7 +342,7 @@ def get_current_state_vector_and_speed() -> str:
     closest_time = time.mktime(time.strptime(closest_epoch["EPOCH"], '%Y-%jT%H:%M:%S.000Z'))
     close_time_readable = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(closest_time))
 
-    geoloc_address = "Unknown"
+    geoloc_address = "Ocean"
 
     # Compute location (latitude, longitude, altitude), Code from coe-332 readthedocs
     try:
@@ -405,7 +405,7 @@ def get_epoch_location(epoch: str) -> str:
         logging.error(f"Failed to decode data: {e}")
         return "Error"
     
-    geoloc_address = "Unknown"
+    geoloc_address = "Ocean"
 
     try: 
         x = float(epoch_data['X']['#text'])
