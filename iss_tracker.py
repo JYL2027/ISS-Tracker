@@ -60,7 +60,7 @@ def fetch_data():
         # Iterate over the state vectors and store each one in Redis with a unique key
         for i, state_vector in enumerate(state_vectors):
             # Generate a unique key for each state vector (you can use the index and timestamp)
-            redis_key = f"iss_state_vector{i}"
+            redis_key = state_vector['EPOCH']
 
             state_vector_json = json.dumps(state_vector)
 
@@ -80,7 +80,6 @@ def get_keys():
         keys = rd.keys() 
         decoded_keys = [key.decode('utf-8') for key in keys]  # Decode each key
         return json.dumps(decoded_keys)  # Return the list as a JSON response
-
 
     except Exception as e:
         logging.error(f"Error fetching keys from Redis: {e}")
