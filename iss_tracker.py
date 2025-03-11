@@ -359,7 +359,7 @@ def get_current_state_vector_and_speed() -> str:
 
     try:
         geocoder = Nominatim(user_agent="iss_tracker")
-        geoloc = geocoder.reverse((lat, lon), zoom=5, language="en")
+        geoloc = geocoder.reverse((lat, lon), zoom=30, language="en")
         if geoloc:
             geoloc_address = geoloc.address 
     except Exception as e:
@@ -428,7 +428,7 @@ def get_epoch_location(epoch: str) -> str:
         # Use GeoPy for geolocation lookup
         try:
             geocoder = Nominatim(user_agent="iss_tracker")
-            geoloc = geocoder.reverse((lat, lon), zoom=15, language="en")
+            geoloc = geocoder.reverse((lat, lon), zoom=30, language="en")
             if geoloc:
                 geoloc_address = geoloc.address
         except Exception as e:
