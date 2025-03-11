@@ -278,11 +278,9 @@ def get_epoch_data(epoch: str) -> str:
 
     # Retrieve data
     epoch_match = rd.get(epoch)
-    # Retrieve the data from Redis
-    epoch_match = rd.get(epoch)
 
     if not epoch_match:
-        logging.error("No data available for the requested epoch.")
+        logging.error("No data available")
         return "Error"
     
     # Decode and load the data from JSON string to a Python dictionary
@@ -323,11 +321,20 @@ def get_epoch_speed(epoch: str) -> str:
         speed (str): The calculated speed in km/s of a certain epoch
     """
 
-    epoch_data = rd.get(epoch).decode('utf-8')
+    # Retrieve data
+    epoch_data = rd.get(epoch)
+
     if not epoch_data:
         logging.error("No data available")
-        return ("Error no data")
-
+        return "Error"
+    
+    # Decode and load the data from JSON string to a Python dictionary
+    try:
+        epoch_data = json.loads(epoch_data)
+    except Exception as e:
+        logging.error(f"Failed to decode the data: {e}")
+        return "Error"
+    
     logging.debug("Matching epochs...")
 
     logging.debug("Match found")
@@ -422,22 +429,20 @@ def get_epoch_location(epoch: str) -> str:
     """
 
     # This code is overall from the coe-332 readthedocs
+    # Retrieve data
+    epoch_data = rd.get(epoch)
+
+    if not epoch_data:
+        logging.error("No data available")
+        return "Error"
+    # Decode and load the data from JSON string to a Python dictionary
     try:
-        state_vectors = fetch_data_from_redis()
-        if not state_vectors:
-            logging.error("No data available in Redis.")
-            return
-
-        epoch_data = None
-        for sv in state_vectors:
-            if sv["EPOCH"] == epoch:
-                epoch_data = sv
-                break
-
-        if epoch_data is None:
-            logging.warning(f"Epoch {epoch} not found.")
-            return 
-        
+        epoch_data = json.loads(epoch_data)
+    except Exception as e:
+        logging.error(f"Failed to decode the data: {e}")
+        return "Error"
+    
+    try: 
         x = float(epoch_data['X']['#text'])
         y = float(epoch_data['Y']['#text'])
         z = float(epoch_data['Z']['#text'])
@@ -474,7 +479,7 @@ def get_epoch_location(epoch: str) -> str:
         }
     
     except Exception as e:
-        logging.error(f"Unexpected error occurred: {e}")
+        logging.error(f"Unexpected error: {e}")
         return
 
 if __name__ == '__main__':
