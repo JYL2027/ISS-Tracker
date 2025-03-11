@@ -37,6 +37,12 @@ def fetch_data():
     Fetches ISS data from NASA and stores it in Redis using keys.
     """
     ISS_URL = "https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml"
+    
+    # Check if Redis already has ISS data
+    if rd.keys():
+        logging.info("Redis already contains ISS data.")
+        return False
+    
     try:
         logging.info("Fetching data from NASA...")
         response = requests.get(ISS_URL)
