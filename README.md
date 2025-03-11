@@ -32,16 +32,17 @@ To access the data used in this homework, please use this link: https://spotthes
 ## Building container and running code (Username is your Docker Hub Username):
 1. **Build Docker image**: First, make sure everything in this homework is in the same directory. In the terminal, please run the command: `docker build -t username/flask-iss_tracker:1.0 .`
 2. **Docker Compose**: Next, use a text editor to edit the docker-compose file. Replace the username part of the file with your docker hub username.
-3. **Run Docker**: To run the container, please run the command: `docker compouse up -d`. The `-d` flags allow the containers to run in the background. 
-4. **Final Steps**: Now that you have the container running, you must use curl commands to access routes to get the data you want.
-5. **Interpret Output**: Here, I will describe the curl commands and what output you should expect.
+3. **Local Data Storage**: In the same director, create a folder called data so that the data written to flask can also be stored on the local machine. 
+4. **Run Docker**: To run the container, please run the command: `docker compouse up -d`. The `-d` flags allow the containers to run in the background.
+5. **Final Steps**: Now that you have the container running, you must use curl commands to access routes to get the data you want.
+6. **Interpret Output**: Here, I will describe the curl commands and what output you should expect.
    - `curl localhost:5000/epochs`: Returns the entire data set in XML format
    - `curl localhost:5000/epochs?limit=int&offset=int`: Returns modified list of Epochs given the query parameters limit and offset in XML format. To do this, place a number in place of the `int` in the curl command. The limit query limits the amount of data outputted, while offset will offset the data being outputted by the amount given.
    - `curl localhost:5000/epochs/<epoch>`: Returns the state vectors for a specific Epoch from the data set. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
    - `curl localhost:5000/epochs/<epoch>/speed`: Returns the instantaneous speed of a specific Epoch from the data set in km/s. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
    - `curl localhost:5000/now`: Returns the state vectors as vectors and the instantaneous speed for the EPOCH closest to the call time.
-6. **Pytest**: If you want to run the unit tests, please run the command `docker exec -it flask-homework05-app bash` on the command line to attach to the container. Then run `pytest test_iss_tracker.py` to run the unit tests.
-7. **Cleanup**: After you are done with the analysis, please run these commands to clean up and remove the container. (ID is the container ID provided after running the container) `docker stop ID` and `docker rm ID`
+7. **Pytest**: If you want to run the unit tests, please run the command `docker exec -it flask-homework05-app bash` on the command line to attach to the container. Then run `pytest test_iss_tracker.py` to run the unit tests.
+8. **Cleanup**: After you are done with the analysis, please run these commands to clean up and remove the container. (ID is the container ID provided after running the container) `docker stop ID` and `docker rm ID`
    
 ## AI Use (Chat GPT): 
 1. AI was used to produce the exception test cases in `test_iss_tracker.py`. I used AI here because I did not know what tests would be reasonable tests for my functions.
