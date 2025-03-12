@@ -5,7 +5,6 @@ from unittest import mock
 import requests
 import json
 from iss_tracker import calc_closest_speed
-from app import app, fetch_data, rd  # Assuming your app file is app.py
 
 # Test data is AI generated
 test_data = [
