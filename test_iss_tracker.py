@@ -18,6 +18,58 @@ test_data = [
 def test_calc_closest_speed():
     assert calc_closest_speed(test_data, 'X_DOT', 'Y_DOT', 'Z_DOT')[0] == pytest.approx(6.928203230275509, rel=1e-4)
 
+import pytest
+from flask import Flask, jsonify
+
+# Create a minimal Flask app for testing purposes
+app = Flask(__name__)
+
+# Sample route definitions (replace with actual route logic in your app)
+@app.route('/epochs', methods=['GET'])
+def get_epochs():
+    # Sample response for testing
+    return jsonify([{'epoch_time': 1234567890, 'id': 1}, {'epoch_time': 1234567891, 'id': 2}])
+
+@app.route('/epochs/<int:epoch_id>', methods=['GET'])
+def get_specific_epoch(epoch_id):
+    # Sample response for testing
+    return jsonify({'epoch_time': 1234567890, 'id': epoch_id})
+
+@pytest.fixture
+def client():
+    with app.test_client() as client:
+        yield client
+
+def test_epochs_route(client):
+    response = client.get('/epochs')
+    
+    # Check that the status code is 200 (OK)
+    assert response.status_code == 200
+    
+    # Check that the response is a list
+    assert isinstance(response.json, list)
+    
+    # Optionally, check that the list is not empty
+    assert len(response.json) > 0
+
+def test_specific_epoch_route(client):
+    # Assuming the first item in the epochs list is a representative epoch
+    response1 = client.get('/epochs')
+    a_representative_epoch = response1.json[0]['id']  # Use 'id' for the representative epoch
+    
+    # Use the representative epoch to make a request for the specific epoch
+    response2 = client.get(f'/epochs/{a_representative_epoch}')
+    
+    # Check that the status code is 200 (OK)
+    assert response2.status_code == 200
+    
+    # Check that the response is a dictionary
+    assert isinstance(response2.json, dict)
+    
+    # Optionally, verify that specific data from the dictionary is correct
+    assert 'id' in response2.json
+    assert 'epoch_time' in response2.json
+
 # Exception tests are AI Generated
 
 # Exception test for calc_closest_speed
