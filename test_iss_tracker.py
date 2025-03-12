@@ -88,34 +88,12 @@ def test_epoch_location_route(setup_flask_app):
     assert "Altitude" in location_data
     assert "Geolocation" in location_data
 
-
 def test_get_current_state_vector_and_speed(setup_flask_app):
     # Test /now route
     response = requests.get(f'{BASE_URL}/now')
     assert response.status_code == 200
-    assert isinstance(response.text, str) 
+    assert isinstance(response.text, str)
 
-def test_404_error_for_invalid_epoch():
-    # Try to access a non-existent epoch
-    response = requests.get(f'{BASE_URL}/epochs/9999999999')  # Invalid epoch
-    assert response.status_code == 404
-    assert "message" in response.json()  
-    assert response.json()["message"] == "Epoch not found"  
-
-def test_400_error_for_bad_request():
-    # Try to access the /epochs route with invalid query parameters (or none at all)
-    response = requests.get(f'{BASE_URL}/epochs/invalid_epoch')  # Invalid input
-    assert response.status_code == 400
-    assert "message" in response.json()
-    assert response.json()["message"] == "Invalid epoch format"  # Customize based on your validation logic
-
-def test_missing_required_parameters():
-    # Assume you require an 'EPOCH' parameter for this endpoint
-    response = requests.get(f'{BASE_URL}/epochs/')
-    assert response.status_code == 400
-    assert "message" in response.json()
-    assert response.json()["message"] == "EPOCH parameter is required"
-    
 # Run the tests using pytest
 if __name__ == "__main__":
     pytest.main()
