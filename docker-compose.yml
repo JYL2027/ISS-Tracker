@@ -16,6 +16,6 @@ services:
             dockerfile: ./Dockerfile
         depends_on:
             - redis-db
-        image: username/flask-iss_tracker-app:1.0
+        image: username/flask-iss_tracker-app:0.0
         ports:
             - 5000:5000
