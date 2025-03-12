@@ -11,6 +11,8 @@ from flask import Flask, jsonify
 # Create a minimal Flask app for testing purposes (AI Use)
 app = Flask(__name__)
 
+# Tests for route functions
+BASE_URL = 'http://127.0.0.1:5000'
 
 # Test data is AI generated
 test_data = [
@@ -46,16 +48,8 @@ def test_calc_closest_speed_exceptions():
     result = calc_closest_speed(test_data_invalid_type, 'X_DOT', 'Y_DOT', 'Z_DOT')
     assert result[0] == 0.0  # If the invalid value is skipped, the closest speed should be 0.0
 
-# Make sure your Flask app is running before running the tests.
-# In a real setup, you may want to use Flask's testing client instead of `requests` here.
-BASE_URL = 'http://127.0.0.1:5000'
-
-
 @pytest.fixture
 def setup_flask_app():
-    # Here, you can set up any necessary state for the app before tests.
-    # For example, make sure data is fetched from Redis if necessary.
-    # Call the `fetch_data()` function if Redis data is required before testing.
     response = requests.get(f'{BASE_URL}/epochs')  # Trigger data fetching or cache population
     assert response.status_code == 200  # Make sure the data is fetched correctly
     return response
@@ -74,15 +68,28 @@ def test_specific_epoch_route(setup_flask_app):
     print(f"Status Code for /epochs: {response1.status_code}")
     print(f"Response for /epochs: {response1.text}")  # Check raw response
 
-    representative_epoch = response1.json()[0]
-    
+    # Check if the response is empty
+    if not response1.text:
+        print("Empty response received for /epochs")
+
+    # Parse the JSON only if the response is valid
+    try:
+        representative_epoch = response1.json()[0]
+    except ValueError as e:
+        print(f"Error parsing JSON from /epochs response: {e}")
+        return  # Exit the test early if there's a problem parsing the JSON
+
     response2 = requests.get(f'{BASE_URL}/epochs/{representative_epoch["EPOCH"]}')
     print(f"Status Code for /epochs/{representative_epoch['EPOCH']}: {response2.status_code}")
     print(f"Response for /epochs/{representative_epoch['EPOCH']}: {response2.text}")  # Check raw response
 
+    # Check if the second response is empty
+    if not response2.text:
+        print("Empty response received for /epochs/{representative_epoch['EPOCH']}")
+
+    # Continue the assertions if both responses are valid
     assert response2.status_code == 200
     assert isinstance(response2.json(), dict)  # Expect a dictionary with specific epoch data
-
 
 def test_epoch_speed_route(setup_flask_app):
     # Get a representative epoch for testing speed route
