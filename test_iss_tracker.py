@@ -5,6 +5,12 @@ from unittest import mock
 import requests
 import json
 from iss_tracker import calc_closest_speed
+import pytest
+from flask import Flask, jsonify
+
+# Create a minimal Flask app for testing purposes (AI Use)
+app = Flask(__name__)
+
 
 # Test data is AI generated
 test_data = [
@@ -17,58 +23,6 @@ test_data = [
 # Test calc_instant_speed function taking only the speed
 def test_calc_closest_speed():
     assert calc_closest_speed(test_data, 'X_DOT', 'Y_DOT', 'Z_DOT')[0] == pytest.approx(6.928203230275509, rel=1e-4)
-
-import pytest
-from flask import Flask, jsonify
-
-# Create a minimal Flask app for testing purposes
-app = Flask(__name__)
-
-# Sample route definitions (replace with actual route logic in your app)
-@app.route('/epochs', methods=['GET'])
-def get_epochs():
-    # Sample response for testing
-    return jsonify([{'epoch_time': 1234567890, 'id': 1}, {'epoch_time': 1234567891, 'id': 2}])
-
-@app.route('/epochs/<int:epoch_id>', methods=['GET'])
-def get_specific_epoch(epoch_id):
-    # Sample response for testing
-    return jsonify({'epoch_time': 1234567890, 'id': epoch_id})
-
-@pytest.fixture
-def client():
-    with app.test_client() as client:
-        yield client
-
-def test_epochs_route(client):
-    response = client.get('/epochs')
-    
-    # Check that the status code is 200 (OK)
-    assert response.status_code == 200
-    
-    # Check that the response is a list
-    assert isinstance(response.json, list)
-    
-    # Optionally, check that the list is not empty
-    assert len(response.json) > 0
-
-def test_specific_epoch_route(client):
-    # Assuming the first item in the epochs list is a representative epoch
-    response1 = client.get('/epochs')
-    a_representative_epoch = response1.json[0]['id']  # Use 'id' for the representative epoch
-    
-    # Use the representative epoch to make a request for the specific epoch
-    response2 = client.get(f'/epochs/{a_representative_epoch}')
-    
-    # Check that the status code is 200 (OK)
-    assert response2.status_code == 200
-    
-    # Check that the response is a dictionary
-    assert isinstance(response2.json, dict)
-    
-    # Optionally, verify that specific data from the dictionary is correct
-    assert 'id' in response2.json
-    assert 'epoch_time' in response2.json
 
 # Exception tests are AI Generated
 
@@ -92,3 +46,73 @@ def test_calc_closest_speed_exceptions():
     result = calc_closest_speed(test_data_invalid_type, 'X_DOT', 'Y_DOT', 'Z_DOT')
     assert result[0] == 0.0  # If the invalid value is skipped, the closest speed should be 0.0
 
+# Make sure your Flask app is running before running the tests.
+# In a real setup, you may want to use Flask's testing client instead of `requests` here.
+BASE_URL = 'http://127.0.0.1:5000'
+
+
+@pytest.fixture
+def setup_flask_app():
+    # Here, you can set up any necessary state for the app before tests.
+    # For example, make sure data is fetched from Redis if necessary.
+    # Call the `fetch_data()` function if Redis data is required before testing.
+    response = requests.get(f'{BASE_URL}/epochs')  # Trigger data fetching or cache population
+    assert response.status_code == 200  # Make sure the data is fetched correctly
+    return response
+
+
+def test_epochs_route(setup_flask_app):
+    # Test the /epochs route
+    response1 = requests.get(f'{BASE_URL}/epochs')
+    assert response1.status_code == 200
+    assert isinstance(response1.json(), list)  # Expect a list of state vectors
+
+
+def test_specific_epoch_route(setup_flask_app):
+    # Get a representative epoch for testing specific epoch endpoint
+    response1 = requests.get(f'{BASE_URL}/epochs')
+    representative_epoch = response1.json()[0]
+    
+    response2 = requests.get(f'{BASE_URL}/epochs/{representative_epoch["EPOCH"]}')
+    
+    assert response2.status_code == 200
+    assert isinstance(response2.json(), dict)  # Expect a dictionary with specific epoch data
+
+
+def test_epoch_speed_route(setup_flask_app):
+    # Get a representative epoch for testing speed route
+    response1 = requests.get(f'{BASE_URL}/epochs')
+    representative_epoch = response1.json()[0]
+    
+    response2 = requests.get(f'{BASE_URL}/epochs/{representative_epoch["EPOCH"]}/speed')
+    
+    assert response2.status_code == 200
+    assert isinstance(response2.text, str)  # Expect speed as a string in the response
+
+
+def test_epoch_location_route(setup_flask_app):
+    # Test /epochs/<epoch>/location
+    response1 = requests.get(f'{BASE_URL}/epochs')
+    representative_epoch = response1.json()[0]
+    
+    response2 = requests.get(f'{BASE_URL}/epochs/{representative_epoch["EPOCH"]}/location')
+    
+    assert response2.status_code == 200
+    location_data = response2.json()
+    assert isinstance(location_data, dict)  # Expect location data as dictionary
+    assert "Latitude" in location_data
+    assert "Longitude" in location_data
+    assert "Altitude" in location_data
+    assert "Geolocation" in location_data
+
+
+def test_get_current_state_vector_and_speed(setup_flask_app):
+    # Test /now route
+    response = requests.get(f'{BASE_URL}/now')
+    assert response.status_code == 200
+    assert isinstance(response.text, str)  # Expect a string response containing state vector, speed, etc.
+
+
+# Run the tests using pytest
+if __name__ == "__main__":
+    pytest.main()
