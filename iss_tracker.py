@@ -311,73 +311,7 @@ def get_epoch_speed(epoch: str) -> str:
     except (KeyError, ValueError) as e:
         logging.error(f"Invalid data: {e}")
         return "Invalid data"
-
-@app.route('/now', methods = ['GET'])
-def get_current_state_vector_and_speed() -> str:
-    """
-    Returns the state vector, latitude, longitude, altitude, geoposition, and instantaneous speed for the nearest epoch to current time
-
-    Args:
-        None
-
-    Returns:
-        response (str): This function returns the state vectors, instantaneous speed, latitude, longitude, altitude and geoposition for the Epoch that is nearest in time as a string
-    """
-
-    # Retrieve data
-    state_vectors = fetch_data_from_redis()
-    if state_vectors is None:
-        logging.error("Error no data")
-        return ("Error no data")
     
-    # Logging done by calc_closest_speed
-    closest_speed, closest_time, closest_epoch = calc_closest_speed(state_vectors, "X_DOT", "Y_DOT", "Z_DOT")
-
-    x = closest_epoch["X"]["#text"]
-    y = closest_epoch["Y"]["#text"]
-    z = closest_epoch["Z"]["#text"]
-    x_velocity = closest_epoch["X_DOT"]["#text"]
-    y_velocity = closest_epoch["Y_DOT"]["#text"]
-    z_velocity = closest_epoch["Z_DOT"]["#text"]
-    closest_time = time.mktime(time.strptime(closest_epoch["EPOCH"], '%Y-%jT%H:%M:%S.000Z'))
-    close_time_readable = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(closest_time))
-
-    geoloc_address = "Ocean"
-
-    # Compute location (latitude, longitude, altitude), Code from coe-332 readthedocs
-    try:
-        this_epoch = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(closest_epoch['EPOCH'][:-5], '%Y-%jT%H:%M:%S'))
-        cartrep = coordinates.CartesianRepresentation([x, y, z], unit=units.km)
-        gcrs = coordinates.GCRS(cartrep, obstime=this_epoch)
-        itrs = gcrs.transform_to(coordinates.ITRS(obstime=this_epoch))
-        loc = coordinates.EarthLocation(*itrs.cartesian.xyz)
-
-        lat, lon, alt = loc.lat.value, loc.lon.value, loc.height.value
-    except Exception as e:
-        logging.error(f"Error calculating location: {e}")
-        return
-
-    try:
-        geocoder = Nominatim(user_agent="iss_tracker")
-        geoloc = geocoder.reverse((lat, lon), zoom=30, language="en")
-        if geoloc:
-            geoloc_address = geoloc.address 
-    except Exception as e:
-        logging.error(f"GeoPy error: {e}")
-
-    # Create the string
-    response = (
-        f"Closest time: {close_time_readable}\n"
-        f"Closest position as a vector: {x} i + {y} j + {z} k (km)\n"
-        f"Closest velocity as a vector: {x_velocity} i + {y_velocity} j + {z_velocity} k (km/s)\n"
-        f"Instantaneous speed: {closest_speed} (km/s)\n"
-        f"Latitude: {lat}\n"
-        f"Longitude: {lon}\n"
-        f"Altitude: {alt} km\n"
-        f"Geolocation: {geoloc_address}\n"
-    )
-    return response
-
 @app.route('/epochs/<epoch>/location', methods = ['GET'])
 def get_epoch_location(epoch: str) -> str:
     """
@@ -447,6 +381,72 @@ def get_epoch_location(epoch: str) -> str:
     except Exception as e:
         logging.error(f"Error: {e}")
         return
+
+@app.route('/now', methods = ['GET'])
+def get_current_state_vector_and_speed() -> str:
+    """
+    Returns the state vector, latitude, longitude, altitude, geoposition, and instantaneous speed for the nearest epoch to current time
+
+    Args:
+        None
+
+    Returns:
+        response (str): This function returns the state vectors, instantaneous speed, latitude, longitude, altitude and geoposition for the Epoch that is nearest in time as a string
+    """
+
+    # Retrieve data
+    state_vectors = fetch_data_from_redis()
+    if state_vectors is None:
+        logging.error("Error no data")
+        return ("Error no data")
+    
+    # Logging done by calc_closest_speed
+    closest_speed, closest_time, closest_epoch = calc_closest_speed(state_vectors, "X_DOT", "Y_DOT", "Z_DOT")
+
+    x = closest_epoch["X"]["#text"]
+    y = closest_epoch["Y"]["#text"]
+    z = closest_epoch["Z"]["#text"]
+    x_velocity = closest_epoch["X_DOT"]["#text"]
+    y_velocity = closest_epoch["Y_DOT"]["#text"]
+    z_velocity = closest_epoch["Z_DOT"]["#text"]
+    closest_time = time.mktime(time.strptime(closest_epoch["EPOCH"], '%Y-%jT%H:%M:%S.000Z'))
+    close_time_readable = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(closest_time))
+
+    geoloc_address = "Ocean"
+
+    # Compute location (latitude, longitude, altitude), Code from coe-332 readthedocs
+    try:
+        this_epoch = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(closest_epoch['EPOCH'][:-5], '%Y-%jT%H:%M:%S'))
+        cartrep = coordinates.CartesianRepresentation([x, y, z], unit=units.km)
+        gcrs = coordinates.GCRS(cartrep, obstime=this_epoch)
+        itrs = gcrs.transform_to(coordinates.ITRS(obstime=this_epoch))
+        loc = coordinates.EarthLocation(*itrs.cartesian.xyz)
+
+        lat, lon, alt = loc.lat.value, loc.lon.value, loc.height.value
+    except Exception as e:
+        logging.error(f"Error calculating location: {e}")
+        return
+
+    try:
+        geocoder = Nominatim(user_agent="iss_tracker")
+        geoloc = geocoder.reverse((lat, lon), zoom=30, language="en")
+        if geoloc:
+            geoloc_address = geoloc.address 
+    except Exception as e:
+        logging.error(f"GeoPy error: {e}")
+
+    # Create the string
+    response = (
+        f"Closest time: {close_time_readable}\n"
+        f"Closest position as a vector: {x} i + {y} j + {z} k (km)\n"
+        f"Closest velocity as a vector: {x_velocity} i + {y_velocity} j + {z_velocity} k (km/s)\n"
+        f"Instantaneous speed: {closest_speed} (km/s)\n"
+        f"Latitude: {lat}\n"
+        f"Longitude: {lon}\n"
+        f"Altitude: {alt} km\n"
+        f"Geolocation: {geoloc_address}\n"
+    )
+    return response
 
 if __name__ == '__main__':
     # Store data in Redis
