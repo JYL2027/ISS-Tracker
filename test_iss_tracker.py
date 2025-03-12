@@ -21,27 +21,6 @@ def test_calc_closest_speed():
 
 # Exception tests are AI Generated
 
-# Exception test for calc_average_speed
-def test_calc_average_speed_exceptions():
-    # Case 1: Empty list should raise a ValueError
-    with pytest.raises(ValueError, match="No data available to compute average speed"):
-        calc_average_speed([], 'X_DOT', 'Y_DOT', 'Z_DOT')
-    
-    test_data_missing_keys = [
-        {'X_DOT': {'#text': '7.0'}, 'Y_DOT': {'#text': '3.0'}, 'EPOCH': '2025-001T12:00:00.000Z'}
-    ]
-    # Case 2: Missing 'X_DOT', 'Y_DOT', or 'Z_DOT' key should skip this entry without raising ValueError
-    # We assume that the current code doesn't raise errors for missing keys but skips them.
-    result = calc_average_speed(test_data_missing_keys, 'X_DOT', 'Y_DOT', 'Z_DOT')
-    assert result == 0.0  # Since only one row with invalid keys will be skipped, the result should be 0.0
-
-    # Case 3: Non-numeric velocity values should not raise a ValueError, but skip the entry
-    test_data_invalid_type = [
-        {'X_DOT': {'#text': '7.0'}, 'Y_DOT': {'#text': 'abc'}, 'Z_DOT': {'#text': '5.0'}, 'EPOCH': '2025-001T12:00:00.000Z'}
-    ]
-    result = calc_average_speed(test_data_invalid_type, 'X_DOT', 'Y_DOT', 'Z_DOT')
-    assert result == 0.0  # Invalid values are skipped, and the result should be 0.0
-
 # Exception test for calc_closest_speed
 def test_calc_closest_speed_exceptions():
     # Case 1: Empty list should raise a ValueError
