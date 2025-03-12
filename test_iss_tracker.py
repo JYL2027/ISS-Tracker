@@ -71,10 +71,15 @@ def test_epochs_route(setup_flask_app):
 def test_specific_epoch_route(setup_flask_app):
     # Get a representative epoch for testing specific epoch endpoint
     response1 = requests.get(f'{BASE_URL}/epochs')
+    print(f"Status Code for /epochs: {response1.status_code}")
+    print(f"Response for /epochs: {response1.text}")  # Check raw response
+
     representative_epoch = response1.json()[0]
     
     response2 = requests.get(f'{BASE_URL}/epochs/{representative_epoch["EPOCH"]}')
-    
+    print(f"Status Code for /epochs/{representative_epoch['EPOCH']}: {response2.status_code}")
+    print(f"Response for /epochs/{representative_epoch['EPOCH']}: {response2.text}")  # Check raw response
+
     assert response2.status_code == 200
     assert isinstance(response2.json(), dict)  # Expect a dictionary with specific epoch data
 
