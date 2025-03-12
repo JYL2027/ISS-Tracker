@@ -10,7 +10,7 @@ This project contains the following files and directories:
 - requirements.txt: A file listing the required Python packages for the project, ensuring a consistent environment.
 - Dockerfile: The file used to build a Docker container for deploying the Flask app.
 - System Diagram
-- Docker-compose
+- Docker-compose.yml
 
 ## Scripts:
 This folder contains two scripts for the Flask web application:
@@ -42,8 +42,8 @@ To access the data used in this homework, please use this link: https://spotthes
    - `curl localhost:5000/epochs/<epoch>/speed`: Returns the instantaneous speed of a specific Epoch from the data set in km/s. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
    - `/epochs/<epoch>/location`: Returns the latitude, longitude, altitude, and geoposition for a specific Epoch in the data set. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
    - `curl localhost:5000/now`: Returns the state vectors as vectors and the instantaneous speed for the EPOCH closest to the call time.
-7. **Pytest**: If you want to run the unit tests, please run the command `docker exec -it flask-homework05-app bash` on the command line to attach to the container. Then run `pytest test_iss_tracker.py` to run the unit tests.
-8. **Cleanup**: After you are done with the analysis, please run these commands to clean up and remove the container. (ID is the container ID provided after running the container) `docker stop ID` and `docker rm ID`
+7. **Pytest**: If you want to run the unit tests, please run the command `docker exec -it flask-iss_tracker-app-1 bash` on the command line to attach to the container. Then run `pytest test_iss_tracker.py` to run the unit tests.
+8. **Cleanup**: After you are done with the analysis, please run the command `docker compose down`.
    
 ## AI Use (Chat GPT): 
 1. AI was used to produce the exception test cases in `test_iss_tracker.py`. I used AI here because I did not know what tests would be reasonable tests for my functions.
