@@ -409,8 +409,6 @@ def get_current_state_vector_and_speed() -> str:
     x_velocity = closest_epoch["X_DOT"]["#text"]
     y_velocity = closest_epoch["Y_DOT"]["#text"]
     z_velocity = closest_epoch["Z_DOT"]["#text"]
-    closest_time = time.mktime(time.strptime(closest_epoch["EPOCH"], '%Y-%jT%H:%M:%S.000Z'))
-    close_time_readable = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(closest_time))
 
     geoloc_address = "Ocean"
 
@@ -437,7 +435,6 @@ def get_current_state_vector_and_speed() -> str:
 
     # Create the string
     response = (
-        f"Closest time: {close_time_readable}\n"
         f"Closest position as a vector: {x} i + {y} j + {z} k (km)\n"
         f"Closest velocity as a vector: {x_velocity} i + {y_velocity} j + {z_velocity} k (km/s)\n"
         f"Instantaneous speed: {closest_speed} (km/s)\n"
