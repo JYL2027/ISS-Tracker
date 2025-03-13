@@ -42,7 +42,7 @@ To access the data used in this homework, please use this link: https://spotthes
    - `curl localhost:5000/epochs/<epoch>/speed`: Returns the instantaneous speed of a specific Epoch from the data set in km/s. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
    - `/epochs/<epoch>/location`: Returns the latitude, longitude, altitude, and geoposition for a specific Epoch in the data set. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
    - `curl localhost:5000/now`: Returns the state vectors as vectors, altitude, latitude, longitude, geoposition, and the instantaneous speed for the EPOCH closest to the call time.
-7. **Pytest**: If you want to run the unit tests, please run the command `docker exec -it iss_tracker-flask-app-1 bash` on the command line to attach to the container. Then run `pytest test_iss_tracker.py` to run the unit tests.
+7. **Pytest**: If you want to run the unit tests, first please run the command `docker ps -a` then identify the name of the flask container. Then, to run the pytest, run the command `docker exec -it <container name> bash` on the command line to attach to the container where <container name> is the name of the container. Then, after entering the container,r run `pytest test_iss_tracker.py` to run the unit tests.
 8. **Cleanup**: After you are done with the analysis, please run the command `docker compose down` to clear the containers.
    
 ## AI Use (Chat GPT): 
