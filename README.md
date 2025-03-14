@@ -36,13 +36,13 @@ To access the data used in this homework, please use this link: https://spotthes
 4. **Run Docker**: To run the container, please run the command: `docker compose up -d`. The `-d` flags allow the containers to run in the background.
 5. **Final Steps**: Now that you have the container running, you must use curl commands to access routes to get the data you want.
 6. **Interpret Output**: Here, I will describe the curl commands and what output you should expect.
-   - `curl localhost:5000/epochs`: Returns the entire data set in XML format
-   - `curl localhost:5000/epochs?limit=int&offset=int`: Returns modified list of Epochs given the query parameters limit and offset in XML format. To do this, place a number in place of the `int` in the curl command. The limit query limits the amount of data outputted, while offset will offset the data being outputted by the amount given.
-   - `curl localhost:5000/epochs/<epoch>`: Returns the state vectors for a specific Epoch from the data set. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
-   - `curl localhost:5000/epochs/<epoch>/speed`: Returns the instantaneous speed of a specific Epoch from the data set in km/s. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
-   - `/epochs/<epoch>/location`: Returns the latitude, longitude, altitude, and geoposition for a specific Epoch in the data set. To do this, replace `<epoch>` with a specific epoch you want from the downloaded XML data above.
+   - `curl localhost:5000/epochs`: Returns the entire data set
+   - `curl localhost:5000/epochs?limit=int&offset=int`: Returns modified list of Epochs given the query parameters limit and offset. To do this, place a number in place of the `int` in the curl command. The limit query limits the amount of data outputted, while offset will offset the data being outputted by the amount given.
+   - `curl localhost:5000/epochs/<epoch>`: Returns the state vectors for a specific Epoch from the data set. To do this, replace `<epoch>` with a specific epoch you want from the downloaded data above.
+   - `curl localhost:5000/epochs/<epoch>/speed`: Returns the instantaneous speed of a specific Epoch from the data set in km/s. To do this, replace `<epoch>` with a specific epoch you want from the downloaded data above.
+   - `/epochs/<epoch>/location`: Returns the latitude, longitude, altitude, and geoposition for a specific Epoch in the data set. To do this, replace `<epoch>` with a specific epoch you want from the downloaded data above.
    - `curl localhost:5000/now`: Returns the state vectors as vectors, altitude, latitude, longitude, geoposition, and the instantaneous speed for the EPOCH closest to the call time.
-7. **Pytest**: If you want to run the unit tests, first please run the command `docker ps -a` then identify the name of the flask container. Then, to run the pytest, run the command `docker exec -it <container name> bash` on the command line to attach to the container where <container name> is the name of the container. Then, after entering the container,r run `pytest test_iss_tracker.py` to run the unit tests.
+7. **Pytest**: If you want to run the unit tests, first please run the command `docker ps -a` then identify the name of the flask container. Then, to run the pytest, run the command `docker exec -it <container name> bash` on the command line to attach to the container where <container name> is the name of the container. Then, after entering the container, run `pytest test_iss_tracker.py` to run the unit tests.
 8. **Cleanup**: After you are done with the analysis, please run the command `docker compose down` to clear the containers.
    
 ## AI Use (Chat GPT): 
@@ -50,4 +50,4 @@ To access the data used in this homework, please use this link: https://spotthes
 3. AI was used to generate the test data information in `test_iss_tracker.py`. I used AI for this because I did not have time to create the data myself.
 4. AI was used to convert the given time in the EPOCH to something readable. I used AI for this because I did not know how to do this myself, even with research.
 5. AI was used in certain areas to generate warning loggings. AI was used for this because I didn't know the proper way to make sure the generated warning was accurate.
-6. AI was used to write the route pytests, which test the functions belonging to certain routes. AI was used for this because I didn't know how to create a mock server to test the flask routes as I had no previous experience of it.
+6. AI was partially used to write the route pytests, which test the functions belonging to certain routes. AI was used for this because I didn't know how to create a mock server to test the flask routes as I had no previous experience of it.
