@@ -32,7 +32,7 @@ To access the data used in this project, please use this link: https://spotthest
 ## Building container and running code (Username is your Docker Hub Username):
 1. **Build Docker image**: First, make sure everything in this project repository is in the same directory. In the terminal, please run the command: `docker build -t username/flask-iss_tracker:1.0 .`
 2. **Docker Compose**: Next, use a text editor to edit the docker-compose.yml file. Replace the username part of the file with your docker hub username.
-3. **Local Data Storage**: In the same director, create a folder called data so that the data written to flask can also be stored on the local machine. 
+3. **Local Data Storage**: In the same director, create a folder called `data` so that the data written to flask can also be stored on the local machine. 
 4. **Run Docker**: To run the container, please run the command: `docker compose up -d`. The `-d` flags allow the containers to run in the background.
 5. **Final Steps**: Now that you have the container running, you must use curl commands to access routes to get the data you want.
 6. **Interpret Output**: Here, I will describe the curl commands and what output you should expect.
