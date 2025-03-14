@@ -197,7 +197,7 @@ def get_epochs() -> list[dict]:
     
         if offset < 0 or offset >= len(state_vectors):
             logging.warning("Offset is out of range")
-            return "Error: Offset out of range", 400
+            return "Error: Offset out of range"
 
         logging.debug("Applying filters")
 
