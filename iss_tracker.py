@@ -188,39 +188,43 @@ def get_epochs() -> list[dict]:
     if state_vectors is None:
         logging.error("Error no data")
 
-    # Handle query parameters for filtering
-    limit = request.args.get('limit', type=int)
-    offset = request.args.get('offset', type=int, default=0)
+    try:
+        # Handle query parameters for filtering
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', type=int, default=0)
 
-    logging.debug(f"Query params - limit: {limit}, offset: {offset}")
+        logging.debug(f"Query params - limit: {limit}, offset: {offset}")
     
-    if offset < 0 or offset >= len(state_vectors):
-        logging.warning("Offset is out of range")
-        return "Error: Offset out of range", 400
+        if offset < 0 or offset >= len(state_vectors):
+            logging.warning("Offset is out of range")
+            return "Error: Offset out of range", 400
 
-    logging.debug("Applying filters")
+        logging.debug("Applying filters")
 
-    # Apply filtering 
-    if limit is not None:
-        filtered_data = []
-        count = 0
+        # Apply filtering 
+        if limit is not None:
+            filtered_data = []
+            count = 0
 
-        for i in range(offset, len(state_vectors)):
-            if count >= limit:
-                break
-            filtered_data.append(state_vectors[i])  
-            count += 1
-        state_vectors = filtered_data  
+            for i in range(offset, len(state_vectors)):
+                if count >= limit:
+                    break
+                filtered_data.append(state_vectors[i])  
+                count += 1
+            state_vectors = filtered_data  
         
-    elif offset is not None: 
-        filtered_data = []
+        elif offset is not None: 
+            filtered_data = []
 
-        for i in range(offset, len(state_vectors)):
-            filtered_data.append(state_vectors[i])  
+            for i in range(offset, len(state_vectors)):
+                filtered_data.append(state_vectors[i])  
 
-        state_vectors = filtered_data 
-
-    return state_vectors
+            state_vectors = filtered_data 
+        
+        return state_vectors
+    except ValueError:
+        logging.error("Invalid query parameter format")
+        return ({"error": "Invalid query parameter format"})
 
 @app.route('/epochs/<epoch>', methods = ['GET'])
 def get_epoch_data(epoch: str) -> str:
